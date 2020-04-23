@@ -3,10 +3,6 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/calib3d.hpp>
 #include <opencv2/imgproc.hpp>
-// standard library
-#include <vector>
-#include <fstream>
-#include <string>
 // handy tools such as DEBUG, CHECK, etc.
 #include "general.hpp"
 // header file
@@ -26,7 +22,7 @@ void Calibrate::write_to_file(std::ofstream &ofs, const std::vector<std::vector<
 }
 
 Calibrate::Calibrate(int numBoards, int numCornersHor, int numCornersVer,
-                 const std::string &object_filename, const std::string &image_filename)
+                     const std::string &object_filename, const std::string &image_filename)
     : _numBoards(numBoards), _numCornersHor(numCornersHor), _numCornersVer(numCornersVer),
       _object_filename(object_filename), _image_filename(image_filename)
 {
@@ -223,7 +219,7 @@ int Calibrate::save_chessboard(const std::vector<cv::Mat> &chessboard_images, bo
 }
 
 bool Calibrate::load_chessboard(std::vector<std::vector<cv::Point3f>> &object_points,
-                              std::vector<std::vector<cv::Point2f>> &image_points) const
+                                std::vector<std::vector<cv::Point2f>> &image_points) const
 {
     // set the size of object_points and image_points
     int numSquares = numCornersHor * numCornersVer;
@@ -291,10 +287,10 @@ bool Calibrate::load_chessboard(std::vector<std::vector<cv::Point3f>> &object_po
 }
 
 void Calibrate::calibrate_camera(const std::vector<std::vector<cv::Point3f>> &objectPoints,
-                               const std::vector<std::vector<cv::Point2f>> &imagePoints,
-                               cv::Size imageSize,
-                               cv::Mat &cameraMatrix,
-                               cv::Mat &distCoeffs)
+                                 const std::vector<std::vector<cv::Point2f>> &imagePoints,
+                                 cv::Size imageSize,
+                                 cv::Mat &cameraMatrix,
+                                 cv::Mat &distCoeffs)
 {
     std::vector<cv::Mat> rvecs, tvecs;
     if (cameraMatrix.empty())
@@ -303,7 +299,7 @@ void Calibrate::calibrate_camera(const std::vector<std::vector<cv::Point3f>> &ob
 			[fx 0  cx
 			 0c fy cy
 			 0  0  1 ]
-			*/
+		*/
         cameraMatrix = cv::Mat(3, 3, CV_32FC1);
         cameraMatrix.ptr<float>(0)[0] = 1; // fx
         cameraMatrix.ptr<float>(1)[1] = 1; // fy
@@ -314,7 +310,7 @@ void Calibrate::calibrate_camera(const std::vector<std::vector<cv::Point3f>> &ob
 }
 
 void Calibrate::display_undistorted(const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs,
-                                  cv::Mat &img, std::string winname)
+                                    cv::Mat &img, std::string winname)
 {
     CHECK(!img.empty());
     bool show_once = winname.empty();
@@ -332,7 +328,7 @@ void Calibrate::display_undistorted(const cv::Mat &cameraMatrix, const cv::Mat &
 }
 
 void Calibrate::display_undistorted(const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs,
-                                  cv::VideoCapture *capture, std::string winname)
+                                    cv::VideoCapture *capture, std::string winname)
 {
     cv::VideoCapture &cap = *capture;
     // make sure image stream is open

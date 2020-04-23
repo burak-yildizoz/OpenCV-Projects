@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <csignal>
+#include <fstream>
 #include <opencv2/core.hpp>
 
 #define DEBUG(cc)                               \

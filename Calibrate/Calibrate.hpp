@@ -1,3 +1,6 @@
+#ifndef CALIBRATE_HPP
+#define CALIBRATE_HPP
+
 // OpenCV includes
 #include <opencv2/videoio.hpp>
 // standard library
@@ -5,8 +8,6 @@
 #include <fstream>
 #include <string>
 #include <new>
-// handy tools such as DEBUG, CHECK, etc.
-#include "general.hpp"
 
 class Calibrate
 {
@@ -16,12 +17,12 @@ class Calibrate
     std::string _object_filename;
     std::string _image_filename;
 
+protected:
     // helper function for *save_chessboard*
     template <class T>
     static void write_to_file(std::ofstream &ofs, const std::vector<std::vector<T>> &obj);
 
 public:
-
     const int &numBoards = _numBoards; // number of chessboard images to be calibrated
     // if the chessboard is 8x8, then both number of corners should be 7
     const int &numCornersHor = _numCornersHor;             // number of corners along width
@@ -29,7 +30,7 @@ public:
     const std::string &object_filename = _object_filename; // external filename for object points
     const std::string &image_filename = _image_filename;   // external filename for image points
 
-    /** @brief Class for fisheye camera calibration
+    /** @brief Class for camera calibration
 	@param numBoards number of chessboard images to be calibrated
 	@param numCornersHor number of corners along width
 	@param numCornersVer  number of corners along heigth
@@ -38,8 +39,8 @@ public:
 	@note The parameters specified here cannot be altered later
 	*/
     explicit Calibrate(int numBoards, int numCornersHor = 9, int numCornersVer = 6,
-                     const std::string &object_filename = "object_points.txt",
-                     const std::string &image_filename = "image_points.txt");
+                       const std::string &object_filename = "object_points.txt",
+                       const std::string &image_filename = "image_points.txt");
 
     /** @brief Opens the camera and saves the chessboard properties to external files
 	Press space key to save the chessboard properties
@@ -98,3 +99,5 @@ public:
                                     cv::VideoCapture *cap = new cv::VideoCapture(0),
                                     std::string winname = "undistorted");
 };
+
+#endif // CALIBRATE_HPP
