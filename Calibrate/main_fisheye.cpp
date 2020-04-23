@@ -14,8 +14,8 @@ int main()
 
 #ifndef NO_CAP
 
-	// open camera #1 asdasfas
-	cv::VideoCapture cap(0);
+	// open camera #1
+	cv::VideoCapture cap(1);
 	CHECK(cap.isOpened());
 
 	// save object & image points to external files

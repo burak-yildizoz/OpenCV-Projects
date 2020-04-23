@@ -296,10 +296,10 @@ void Calibrate::calibrate_camera(const std::vector<std::vector<cv::Point3f>> &ob
     if (cameraMatrix.empty())
     {
         /*
-			[fx 0  cx
-			 0c fy cy
-			 0  0  1 ]
-		*/
+            [fx 0  cx
+              0 fy cy
+              0  0  1]
+        */
         cameraMatrix = cv::Mat(3, 3, CV_32FC1);
         cameraMatrix.ptr<float>(0)[0] = 1; // fx
         cameraMatrix.ptr<float>(1)[1] = 1; // fy

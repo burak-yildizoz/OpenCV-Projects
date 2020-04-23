@@ -20,11 +20,11 @@ public:
                      const std::string &object_filename = "object_points.txt",
                      const std::string &image_filename = "image_points.txt");
 
-    /** @brief Uses cv::calibrateCamera, but with more default arguments
+    /** @brief Calibrate fisheye camera
 	@param object_points The physical position of the corners (in 3D space)
 	@param image_points The location of the corners on in the image (in 2 dimensions)
 	@param imageSize Size of the image
-	@param cameraMatrix 3x3 matrix that represents intrinsic parameters. An empty matrix is converted to have fx=fy=1
+	@param cameraMatrix 3x3 matrix that represents intrinsic parameters
 	@param distCoeffs Distortion coefficients
 	*/
     static void calibrate_camera(const std::vector<std::vector<cv::Point3f>> &objectPoints,
