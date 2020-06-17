@@ -148,10 +148,10 @@ cv::Mat Stitcher::stitch(const cv::Mat& prevImg, const cv::Mat& nextImg, const c
 
 const cv::Ptr<cv::ORB> Stitcher::descriptor = cv::ORB::create();
 const cv::Ptr<cv::FlannBasedMatcher> Stitcher::matcher = cv::makePtr<cv::FlannBasedMatcher>
-	(cv::FlannBasedMatcher(cv::makePtr<cv::flann::LshIndexParams>(12, 20, 2)));
+(cv::FlannBasedMatcher(cv::makePtr<cv::flann::LshIndexParams>(12, 20, 2)));
 
 Stitcher::Stitcher(const cv::Mat &img) : _imgs(std::vector<cv::Mat>(1, img.clone())),
-										 _cumulativeH(std::vector<cv::Mat>(1, cv::Mat::eye(3, 3, CV_64F)))
+_cumulativeH(std::vector<cv::Mat>(1, cv::Mat::eye(3, 3, CV_64F)))
 {
 	// convert to grayscale
 	cv::Mat gray = imgops::rgb2gray(img);
