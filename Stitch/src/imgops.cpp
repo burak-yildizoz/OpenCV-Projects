@@ -58,7 +58,7 @@ namespace imgops
         }
 
         ConnectImages::ConnectImages(cv::Rect prevRect, cv::Rect nextRect) :
-        _prevRect(prevRect), _nextRect(nextRect) {};
+        _prevRect(prevRect), _nextRect(nextRect) {}
 
         ConnectImages::ConnectImages(cv::Size prevSize, cv::Size nextSize) :
         _prevRect(cv::Rect(0, nextSize.height, prevSize.width, prevSize.height)),

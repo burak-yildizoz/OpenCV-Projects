@@ -1,3 +1,5 @@
 *.exe
 Calibrate/*.txt
+build
+*.log
 
