@@ -1,7 +1,12 @@
 #ifndef STITCH_HPP
 #define STITCH_HPP
 
-#include <opencv2/features2d.hpp>
+#include <opencv2/core.hpp>
+#ifdef HAVE_OPENCV_XFEATURES2D
+    #include <opencv2/xfeatures2d.hpp>
+#else
+    #include <opencv2/features2d.hpp>
+#endif
 #include <vector>
 #include <utility>
 
@@ -13,6 +18,8 @@ struct Feature
     cv::Mat desc;
     // obtain the features of an image
     Feature(const cv::Mat& gray);
+    // default destructor
+    ~Feature() {}
     // return the vector of keypoints
     std::vector<cv::Point2f> getKeypoints() const;
 };
@@ -49,7 +56,11 @@ class Stitcher
 public:
 
     // detect and extract features from the image
+#ifdef HAVE_OPENCV_XFEATURES2D
+    static const cv::Ptr<cv::xfeatures2d::SIFT> descriptor;
+#else
     static const cv::Ptr<cv::ORB> descriptor;
+#endif
     // compute the raw matches
     static const cv::Ptr<cv::FlannBasedMatcher> matcher;
 
@@ -75,6 +86,8 @@ public:
 
     // construct the Stitcher object with the first image
     Stitcher(const cv::Mat &img);
+    // default destructor
+    ~Stitcher() {}
 
     // add a new image
     void add(const cv::Mat &img);
