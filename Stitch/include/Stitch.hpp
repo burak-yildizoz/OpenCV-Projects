@@ -66,11 +66,11 @@ public:
 
     // returns IDs of matched features given descriptors
     // {trainIds, queryIds}
-    std::pair<std::vector<int>, std::vector<int>> findMatch(const cv::Mat& prevDesc, const cv::Mat& nextDesc);
+    static std::pair<std::vector<int>, std::vector<int>> findMatch(const cv::Mat& prevDesc, const cv::Mat& nextDesc);
     // returns the 3x3 homography matrix given matching keypoints
     // and the success status of given matching IDs
     // {H, state}
-    std::pair<cv::Mat, std::vector<bool>> findHomography(
+    static std::pair<cv::Mat, std::vector<bool>> findHomography(
         const std::vector<int>& trainIDs, const std::vector<int>& queryIDs,
         const std::vector<cv::KeyPoint>& trainKps, const std::vector<cv::KeyPoint>& queryKps);
     // find the ROI of an affine transform result
