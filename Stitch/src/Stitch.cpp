@@ -25,35 +25,15 @@ std::pair<cv::Mat, cv::Point> Stitcher::_calculatePano()
     const cv::Point &prevOrig = _lastPano.second;
     const cv::Mat &img = _imgs.back();
     // correct the homography matrix
-    cv::Mat corrH;
     const std::vector<int> &trainIDs = _matches.back().first;
     const std::vector<int> &queryIDs = _matches.back().second;
-    std::vector<cv::Point2f> trainKeypoints = _features[_features.size() - 2].getKeypoints();
-    const std::vector<cv::KeyPoint> &queryKps = _features.back().kps;
-    if (trainIDs.size() > 4)
-    {
-        // construct the two sets of points
-        std::vector<cv::Point> srcPoints, dstPoints;
-        for (size_t i = 0; i < trainIDs.size(); i++)
-        {
-            srcPoints.push_back((cv::Point)trainKeypoints[trainIDs[i]] + prevOrig);
-            dstPoints.push_back(queryKps[queryIDs[i]].pt);
-        }
-        // compute the homography between the two sets of points
-        double reprojThresh = 4.0;
-        corrH = cv::findHomography(srcPoints, dstPoints, cv::RANSAC, reprojThresh);
-    }
-    // find corresponding points after homography
-    cv::Point orig = warpRect(prevPano.size(), corrH).tl(); // warped top-left point of last pano
-    cv::Mat pano = warpImage(prevPano, corrH, orig);        // desired pano
-    cv::Rect nextRect(-orig, img.size());                   // ROI of last image
-    cv::Point shift = imgops::addBorder(pano, nextRect);    // the amount of shift at top-left corner
-    img.copyTo(pano(cv::Rect(shift - orig, img.size())));
-    // crop the black borders from top-left
-    cv::Rect bb = imgops::cropBorder(pano);
-    pano = pano(bb);
-    cv::Point newOrig = shift - orig - bb.tl();
-    return std::make_pair(pano, newOrig);
+    std::vector<cv::Point2f> trainPts = _features[_features.size() - 2].getKeypoints();
+    std::vector<cv::Point2f> queryPts = _features.back().getKeypoints();
+    for (cv::Point2f& pt : trainPts)
+        pt += (cv::Point2f)prevOrig;
+    cv::Mat corrH = findHomography(trainIDs, queryIDs, trainPts, queryPts).first;
+    
+    return warpPano(img, prevPano, corrH);
 }
 
 std::pair<std::vector<int>, std::vector<int>> Stitcher::findMatch(const cv::Mat &prevDesc, const cv::Mat &nextDesc)
@@ -78,7 +58,7 @@ std::pair<std::vector<int>, std::vector<int>> Stitcher::findMatch(const cv::Mat 
 
 std::pair<cv::Mat, std::vector<bool>> Stitcher::findHomography(
     const std::vector<int> &trainIDs, const std::vector<int> &queryIDs,
-    const std::vector<cv::KeyPoint> &trainKps, const std::vector<cv::KeyPoint> &queryKps)
+    const std::vector<cv::Point2f> &trainPts, const std::vector<cv::Point2f> &queryPts)
 {
     // computing a homography requires at least 4 matches
     cv::Mat H;
@@ -86,11 +66,11 @@ std::pair<cv::Mat, std::vector<bool>> Stitcher::findHomography(
     if (trainIDs.size() > 4)
     {
         // construct the two sets of points
-        std::vector<cv::Point> srcPoints, dstPoints;
+        std::vector<cv::Point2f> srcPoints, dstPoints;
         for (size_t i = 0; i < trainIDs.size(); i++)
         {
-            srcPoints.push_back(trainKps[trainIDs[i]].pt);
-            dstPoints.push_back(queryKps[queryIDs[i]].pt);
+            srcPoints.push_back(trainPts[trainIDs[i]]);
+            dstPoints.push_back(queryPts[queryIDs[i]]);
         }
         // compute the homography between the two sets of points
         double reprojThresh = 4.0;
@@ -101,6 +81,7 @@ std::pair<cv::Mat, std::vector<bool>> Stitcher::findHomography(
         for (int i = 0; i < mask.rows; i++)
             state[i] = mask.at<bool>(i, 0);
     }
+    CHECK(!H.empty());
     return std::make_pair(H, state);
 }
 
@@ -145,6 +126,50 @@ cv::Mat Stitcher::stitch(const cv::Mat &prevImg, const cv::Mat &nextImg, const c
     return res;
 }
 
+std::pair<cv::Mat, cv::Point> Stitcher::patchPano(
+    const std::pair<cv::Mat, cv::Point>& prevPano,
+    const std::pair<cv::Mat, cv::Point>& nextPano)
+{
+    const cv::Mat& prevImg = prevPano.first;
+    const cv::Mat& nextImg = nextPano.first;
+    const cv::Point& prevOrig = prevPano.second;
+    const cv::Point& nextOrig = nextPano.second;
+    // bottom right points
+    cv::Point prevbr = prevImg.size();
+    cv::Point nextbr = nextImg.size();
+    // distance from orig to br
+    cv::Point prevdiag = prevbr - prevOrig;
+    cv::Point nextdiag = nextbr - nextOrig;
+    // possible pano corner coordinates
+    std::vector<cv::Point> cornerpoints(4);
+    cornerpoints[0] = cv::Point(0, 0);
+    cornerpoints[1] = prevbr;
+    cornerpoints[2] = prevOrig + nextdiag;
+    cornerpoints[3] = prevOrig - nextOrig;
+    cv::Rect bb = cv::boundingRect(cornerpoints);
+    // patch prevImg to nextImg
+    cv::Mat pano = prevImg.clone();
+    cv::Point shift = imgops::addBorder(pano, bb);
+    cv::Point orig = prevOrig + shift;
+    nextImg.copyTo(pano(cv::Rect(orig - nextOrig, nextImg.size())), imgops::rgb2gray(nextImg));
+    return std::make_pair(pano, orig);
+}
+
+std::pair<cv::Mat, cv::Point> Stitcher::warpPano(const cv::Mat& img, const cv::Mat& prevPano, const cv::Mat& corrH)
+{
+    // find corresponding points after homography
+    cv::Point orig = warpRect(prevPano.size(), corrH).tl(); // warped top-left point of last pano
+    cv::Mat pano = warpImage(prevPano, corrH, orig);        // desired pano
+    cv::Rect nextRect(-orig, img.size());                   // ROI of last image
+    cv::Point shift = imgops::addBorder(pano, nextRect);    // the amount of shift at top-left corner
+    img.copyTo(pano(cv::Rect(shift - orig, img.size())));
+    // crop the black borders from top-left
+    cv::Rect bb = imgops::cropBorder(pano);
+    pano = pano(bb);
+    cv::Point newOrig = shift - orig - bb.tl();
+    return std::make_pair(pano, newOrig);
+}
+
 #ifdef HAVE_OPENCV_XFEATURES2D
     const cv::Ptr<cv::xfeatures2d::SIFT> Stitcher::descriptor = cv::xfeatures2d::SIFT::create();
     const cv::Ptr<cv::FlannBasedMatcher> Stitcher::matcher = cv::FlannBasedMatcher::create();
@@ -154,8 +179,8 @@ cv::Mat Stitcher::stitch(const cv::Mat &prevImg, const cv::Mat &nextImg, const c
         cv::FlannBasedMatcher(cv::makePtr<cv::flann::LshIndexParams>(12, 20, 2)));
 #endif
 
-Stitcher::Stitcher(const cv::Mat &img) : _imgs(std::vector<cv::Mat>(1, img.clone())),
-                                         _cumulativeH(std::vector<cv::Mat>(1, cv::Mat::eye(3, 3, CV_64F)))
+Stitcher::Stitcher(const cv::Mat &img) :
+    _imgs(std::vector<cv::Mat>(1, img.clone()))
 {
     // convert to grayscale
     cv::Mat gray = imgops::rgb2gray(img);
@@ -165,6 +190,39 @@ Stitcher::Stitcher(const cv::Mat &img) : _imgs(std::vector<cv::Mat>(1, img.clone
     // save the results
     _lastPano = std::make_pair(_imgs.front(), cv::Point(0, 0));
     _features.push_back(feature);
+}
+
+Stitcher::Stitcher(const cv::Mat& img, const cv::Mat& lastPano, cv::Rect lastRect)
+{
+    cv::Mat prevImg = lastPano(lastRect).clone();
+    _imgs.resize(2);
+    _imgs[0] = prevImg;
+    _imgs[1] = img.clone();
+
+    // find features
+    Feature prevFeature(imgops::rgb2gray(prevImg));
+    Feature feature(imgops::rgb2gray(img));
+    _features.push_back(prevFeature);
+    _features.push_back(feature);
+    
+    // find the matching features
+    std::pair<std::vector<int>, std::vector<int>> match = findMatch(prevFeature.desc, feature.desc);
+    const std::vector<int> &trainIDs = match.first;
+    const std::vector<int> &queryIDs = match.second;
+    _matches.push_back(match);
+
+    // compute the homography between the previous image
+    std::vector<cv::Point2f> trainPts = prevFeature.getKeypoints();
+    std::vector<cv::Point2f> queryPts = feature.getKeypoints();
+    std::pair<cv::Mat, std::vector<bool>> homography = findHomography(trainIDs, queryIDs, trainPts, queryPts);
+    _homographies.push_back(homography.first);
+    _status.push_back(homography.second);
+    
+    // calculate the last pano
+    for (cv::Point2f& pt : trainPts)
+        pt += (cv::Point2f)lastRect.tl();
+    cv::Mat corrH = findHomography(trainIDs, queryIDs, trainPts, queryPts).first;
+    _lastPano = warpPano(img, lastPano, corrH);
 }
 
 void Stitcher::add(const cv::Mat &img)
@@ -180,14 +238,10 @@ void Stitcher::add(const cv::Mat &img)
     const std::vector<int> &queryIDs = match.second;
 
     // compute the homography between the previous image
-    std::pair<cv::Mat, std::vector<bool>> homography = findHomography(
-        trainIDs, queryIDs, _features.back().kps, feature.kps);
+    std::pair<cv::Mat, std::vector<bool>> homography = findHomography(trainIDs, queryIDs,
+        _features.back().getKeypoints(), feature.getKeypoints());
     const cv::Mat &H = homography.first;
     const std::vector<bool> &state = homography.second;
-
-    // compute the homography between all previous images with img
-    for (cv::Mat &cH : _cumulativeH)
-        cH = cH * H;
 
     // save the results
     _imgs.push_back(img.clone());
@@ -195,43 +249,12 @@ void Stitcher::add(const cv::Mat &img)
     _matches.push_back(match);
     _status.push_back(state);
     _homographies.push_back(H);
-    _cumulativeH.push_back(cv::Mat::eye(3, 3, CV_64F));
     _lastPano = _calculatePano();
 }
 
-cv::Mat Stitcher::pano() const
+const cv::Mat Stitcher::pano() const
 {
-    /* This method warps each image to the pano seperately
-	// find the boundaries of the result
-	int xmin = INT_MAX, xmax = INT_MIN, ymin = INT_MAX, ymax = INT_MIN;
-	for (size_t i = 0; i < _imgs.size(); i++)
-	{
-		cv::Size sz = _imgs[i].size();
-		const cv::Mat &cH = _cumulativeH[i];
-		cv::Rect roi = warpRect(sz, cH);
-		xmin = MIN(xmin, roi.x);
-		xmax = MAX(xmax, roi.br().x);
-		ymin = MIN(ymin, roi.y);
-		ymax = MAX(ymax, roi.br().y);
-	}
-	cv::Point anchor(xmin, ymin);
-	cv::Size finalSize(xmax - xmin, ymax - ymin);
-
-	// warp each image to the pano
-	cv::Mat result(finalSize, CV_8UC3, cv::Scalar(0, 0, 0));
-	for (size_t i = 0; i < _imgs.size(); i++)
-	{
-		const cv::Mat &img = _imgs[i];
-		const cv::Mat &cH = _cumulativeH[i];
-		cv::Point orig = warpRect(img.size(), cH).tl();
-		cv::Mat warped = warpImage(img, cH, orig);
-		cv::Mat mask = imgops::rgb2gray(warped);
-		warped.copyTo(result(cv::Rect(orig - anchor, warped.size())), mask);
-	}
-
-	return result;
-	*/
-    return _lastPano.first.clone();
+    return _lastPano.first;
 }
 
 cv::Mat Stitcher::newestStitch() const
@@ -262,8 +285,7 @@ cv::Mat Stitcher::drawMatches() const
     return vis;
 }
 
-cv::Mat Stitcher::prevImg() const
+std::pair<cv::Mat, cv::Point> Stitcher::panoWithOrigin() const
 {
-    CHECK(_imgs.size() > 1);
-    return _imgs[_imgs.size() - 2].clone();
+    return _lastPano;
 }
