@@ -104,4 +104,3 @@ inline std::istream& operator >> (std::istream& is, cv::Mat& mat)
 }
 
 #endif // GENERAL_HPP
-

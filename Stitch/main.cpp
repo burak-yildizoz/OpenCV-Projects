@@ -21,9 +21,14 @@ int main()
         return prepath + std::to_string(num) + postpath;
     };
 
-    cv::Mat img = cv::imread(filename(start), cv::IMREAD_COLOR);
-    CHECK(!img.empty());
-    img = imgops::resize(img, 480);
+    auto images = [&filename](int num) -> cv::Mat
+    {
+        cv::Mat img = cv::imread(filename(num), cv::IMREAD_COLOR);
+        CHECK(!img.empty());
+        return imgops::resize(img, 480);
+    };
+
+    cv::Mat img = images(start);
 
     std::cout << "Press any key to continue" << std::endl;
     std::cout << "Press space to pause" << std::endl;
@@ -40,9 +45,7 @@ int main()
     {
         std::cout << i << std::endl;
         // read next image and resize
-        img = cv::imread(filename(i), cv::IMREAD_COLOR);
-        CHECK(!img.empty());
-        img = imgops::resize(img, 480);
+        img = images(i);
         // do stitching and get the results
         stitcher.add(img);
         cv::Mat matches = stitcher.drawMatches();
@@ -54,7 +57,8 @@ int main()
         cv::imshow(winname, pano);
         ch = cv::waitKey(1);
         // wait for user if there may be a problem
-        if (stitching.size().area() > 1.4 * img.size().area())
+        static int lastArea = pano.size().area();
+        if (pano.size().area() > 1.4 * lastArea)
         {
             std::cout << "Check if there is any problem!" << std::endl;
             ch = cv::waitKey();
@@ -68,7 +72,43 @@ int main()
             std::cout << "Continued!" << std::endl;
         }
     }
+/*
+    cv::destroyAllWindows();
+
+    // pano: ... 1 -> 2
+    Stitcher sfront(images(1));
+    cv::Mat patchImg = images(2);
+    // add until patch image
+    sfront.add(patchImg);
+
+    // pano: ... 3 -> 2
+    Stitcher sback(images(3));
+    // add until patch image
+    sback.add(patchImg);
+
+    // merge: ... 1 -> 2 <- 3 ...
+    std::pair<cv::Mat, cv::Point> patchedPano = Stitcher::patchPano(
+        sfront.panoWithOrigin(), sback.panoWithOrigin());
+    const cv::Mat& pano = patchedPano.first;
     
+    cv::imshow("first stitch", sfront.pano());
+    cv::imshow("second stitch", sback.pano());
+    cv::imshow("pano", pano);
+    cv::waitKey();
+
+    // warp: ... 1 -> 2 <- 3 ...
+                      |
+                      v
+                      4
+    cv::Mat nextImg = images(4);
+    Stitcher scont(nextImg, pano, cv::Rect(patchedPano.second, patchImg.size()));
+    // continue adding
+
+    cv::imshow("matches", scont.drawMatches());
+    cv::imshow("stitching", scont.newestStitch());
+    cv::imshow("new pano", scont.pano());
+    cv::waitKey();
+*/
     cv::destroyAllWindows();
     return 0;
 }
