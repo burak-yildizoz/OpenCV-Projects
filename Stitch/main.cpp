@@ -109,6 +109,28 @@ int main()
     cv::imshow("new pano", scont.pano());
     cv::waitKey();
 */
+/*
+    // create a map where visited points are true
+    cv::Mat local_map = (cv::Mat_<uchar>(3, 6) <<
+            0, 0, 1, 1, 1, 1,
+            0, 1, 1, 1, 1, 0,
+            1, 1, 1, 1, 0, 0) * 255;
+    cv::imshow("map", local_map);
+    cv::waitKey();
+
+    // provide the function that given x and y coordinates
+    // return the image at that location in local map
+    auto Im = std::function<cv::Mat(int, int)>([&local_map, &images](int x, int y) -> cv::Mat
+    {
+        int num = x + local_map.cols * y + 1;
+        return images(num);
+    });
+
+    // combine the images in the map
+    cv::Mat combined = Stitcher::combineImages(local_map, Im);
+    cv::imshow("map", combined);
+    cv::waitKey();
+*/
     cv::destroyAllWindows();
     return 0;
 }

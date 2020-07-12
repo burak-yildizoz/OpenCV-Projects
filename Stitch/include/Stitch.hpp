@@ -9,6 +9,7 @@
 #endif
 #include <vector>
 #include <utility>
+#include <functional>
 
 struct Feature
 {
@@ -91,13 +92,19 @@ public:
         const std::pair<cv::Mat, cv::Point>& nextPano);
     // stitch the last pano onto the new image
     // the corrected homography matrix must be calculated previously and it must directly warp prevPano onto img
-    std::pair<cv::Mat, cv::Point> warpPano(const cv::Mat& img, const cv::Mat& prevPano, const cv::Mat& corrH);
+    static std::pair<cv::Mat, cv::Point> warpPano(const cv::Mat& img, const cv::Mat& prevPano, const cv::Mat& corrH);
+    // combine images given the local map and the function which gives the image at a specific index
+    // Im(x, y) should return the image that localMap.at<uchar>(y, x) corresponds to
+    static cv::Mat combineImages(const cv::Mat& localMap, std::function<cv::Mat(int, int)> Im);
 
     // construct the Stitcher object with the first image
     Stitcher(const cv::Mat &img);
     // construct a new Stitcher object with given previous pano
     // stitching is done from lastPano(lastRect) to img
     Stitcher(const cv::Mat& img, const cv::Mat& lastPano, cv::Rect lastRect);
+    // construct a new Stitcher object by patching two Stitchers
+    // see patchPano
+    Stitcher(const Stitcher& prevStitcher, const Stitcher& nextStitcher);
     // default destructor
     ~Stitcher() {}
 
@@ -111,6 +118,8 @@ public:
     cv::Mat drawMatches() const;
     // the final stitching result with origin point of last image
     std::pair<cv::Mat, cv::Point> panoWithOrigin() const;
+    // last image
+    cv::Mat lastImg() const;
 };
 
 #endif // STITCH_HPP

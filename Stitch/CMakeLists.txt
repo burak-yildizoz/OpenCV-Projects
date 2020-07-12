@@ -9,6 +9,6 @@ find_package(OpenCV REQUIRED)
 
 include_directories("include")
 
-add_executable(main main.cpp src/Stitch.cpp src/imgops.cpp)
+add_executable(main main.cpp src/Stitch.cpp src/imgops.cpp src/Contour.cpp)
 target_link_libraries(main ${OpenCV_LIBS})
 
