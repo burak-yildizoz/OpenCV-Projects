@@ -28,6 +28,7 @@ int main()
         return imgops::resize(img, 480);
     };
 
+
     cv::Mat img = images(start);
 
     std::cout << "Press any key to continue" << std::endl;
@@ -72,6 +73,7 @@ int main()
             std::cout << "Continued!" << std::endl;
         }
     }
+
 /*
     cv::destroyAllWindows();
 
@@ -110,12 +112,15 @@ int main()
     cv::waitKey();
 */
 /*
+    const char winname[] = "map";
+    cv::namedWindow(winname, cv::WINDOW_KEEPRATIO);
+
     // create a map where visited points are true
     cv::Mat local_map = (cv::Mat_<uchar>(3, 6) <<
             0, 0, 1, 1, 1, 1,
             0, 1, 1, 1, 1, 0,
             1, 1, 1, 1, 0, 0) * 255;
-    cv::imshow("map", local_map);
+    cv::imshow(winname, local_map);
     cv::waitKey();
 
     // provide the function that given x and y coordinates
@@ -128,7 +133,7 @@ int main()
 
     // combine the images in the map
     cv::Mat combined = Stitcher::combineImages(local_map, Im);
-    cv::imshow("map", combined);
+    cv::imshow(winname, combined);
     cv::waitKey();
 */
     cv::destroyAllWindows();

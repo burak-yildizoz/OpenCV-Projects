@@ -1,5 +1,3 @@
-#include <opencv2/imgproc.hpp>
-
 #include <numeric>
 #include <string>
 
