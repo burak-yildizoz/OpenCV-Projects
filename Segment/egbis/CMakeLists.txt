@@ -11,4 +11,3 @@ file(GLOB SOURCES egbis.cpp egbis/disjoint-set.cpp egbis/misc.cpp egbis/segment-
 add_library(egbis SHARED ${SOURCES})
 target_link_libraries(egbis ${OpenCV_LIBS})
 target_include_directories(egbis PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-

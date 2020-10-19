@@ -1,7 +1,7 @@
 #ifndef IMGOPS_HPP
 #define IMGOPS_HPP
 
-#include <opencv2/imgops.hpp>
+#include <opencv2/imgproc.hpp>
 
 #include <vector>
 
