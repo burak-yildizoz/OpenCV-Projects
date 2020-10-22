@@ -32,6 +32,7 @@ int main(int argc, char *argv[])
                          0, 1, 1, 1, 1, 0,
                          1, 1, 1, 1, 0, 0) * 255;
     cv::imshow(winname, local_map);
+    std::cout << "Resize the window to see the local map." << std::endl;
     cv::waitKey();
 
     // provide the function that given x and y coordinates
