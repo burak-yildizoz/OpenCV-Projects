@@ -138,7 +138,6 @@ std::pair<cv::Mat, cv::Point> Stitcher::patchPano(
     cv::Point prevbr = prevImg.size();
     cv::Point nextbr = nextImg.size();
     // distance from orig to br
-    cv::Point prevdiag = prevbr - prevOrig;
     cv::Point nextdiag = nextbr - nextOrig;
     // possible pano corner coordinates
     std::vector<cv::Point> cornerpoints(4);
@@ -199,13 +198,17 @@ cv::Mat Stitcher::combineImages(const cv::Mat& localMap, std::function<cv::Mat(i
     {
         int idx = -1;
         for (int i = 0; i < localMap.cols; i++)
+        {
             if (localMap.at<uchar>(row, i))
+            {
                 if (idx == -1)
                     idx = i;
                 else if (abs(center.x - i) < abs(center.x - idx))
                     idx = i;
                 else
                     return idx;
+            }
+        }
         CHECK(idx != -1);
         return idx;
     };

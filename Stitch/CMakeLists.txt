@@ -10,5 +10,14 @@ find_package(OpenCV REQUIRED)
 
 include_directories("include")
 
-add_executable(main main.cpp src/Stitch.cpp src/imgops.cpp src/Contour.cpp)
+set(SOURCES "src/Stitch.cpp" "src/imgops.cpp" "src/Contour.cpp")
+
+add_executable(main main.cpp ${SOURCES})
 target_link_libraries(main ${OpenCV_LIBS})
+
+add_executable(patch_demo patch_demo.cpp ${SOURCES})
+target_link_libraries(patch_demo ${OpenCV_LIBS})
+
+add_executable(combine_parts combine_parts.cpp ${SOURCES})
+target_link_libraries(combine_parts ${OpenCV_LIBS})
+
