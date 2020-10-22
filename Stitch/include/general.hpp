@@ -103,4 +103,31 @@ inline std::istream& operator >> (std::istream& is, cv::Mat& mat)
     return is;
 }
 
+// https://stackoverflow.com/questions/8936063/does-there-exist-a-static-warning#answer-8990275
+#if defined(__GNUC__)
+#define DEPRECATE(foo, msg) foo __attribute__((deprecated(msg)))
+#elif defined(_MSC_VER)
+#define DEPRECATE(foo, msg) __declspec(deprecated(msg)) foo
+#else
+#error This compiler is not supported
+#endif
+
+#define PP_CAT(x,y) PP_CAT1(x,y)
+#define PP_CAT1(x,y) x##y
+
+namespace detail
+{
+    struct true_type {};
+    struct false_type {};
+    template <int test> struct converter : public true_type {};
+    template <> struct converter<0> : public false_type {};
+}
+
+#define STATIC_WARNING(cond, msg) \
+struct PP_CAT(static_warning,__LINE__) { \
+  DEPRECATE(void _(::detail::false_type const& ),msg) {}; \
+  void _(::detail::true_type const& ) {}; \
+  PP_CAT(static_warning,__LINE__)() {_(::detail::converter<(cond)>());} \
+}
+
 #endif // GENERAL_HPP

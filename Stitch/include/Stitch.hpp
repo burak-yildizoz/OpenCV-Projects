@@ -5,6 +5,9 @@
 #ifdef HAVE_OPENCV_XFEATURES2D
     #include <opencv2/xfeatures2d.hpp>
 #else
+    #include "general.hpp"
+    STATIC_WARNING(false, "OpenCV xfeatures2d is not available. Using ORB features."
+    " There may occur incorrect results more than expected.");
     #include <opencv2/features2d.hpp>
 #endif
 #include <vector>
