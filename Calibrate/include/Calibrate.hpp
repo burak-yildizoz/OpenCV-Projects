@@ -5,9 +5,7 @@
 #include <opencv2/videoio.hpp>
 // standard library
 #include <vector>
-#include <fstream>
 #include <string>
-#include <new>
 
 class Calibrate
 {
@@ -20,7 +18,7 @@ class Calibrate
 protected:
     // helper function for *save_chessboard*
     template <class T>
-    static void write_to_file(std::ofstream &ofs, const std::vector<std::vector<T>> &obj);
+    static void write_to_file(std::string filename, const std::vector<std::vector<T>> &obj);
 
 public:
     const int &numBoards = _numBoards; // number of chessboard images to be calibrated
@@ -42,23 +40,17 @@ public:
                        const std::string &object_filename = "object_points.txt",
                        const std::string &image_filename = "image_points.txt");
 
-    /** @brief Opens the camera and saves the chessboard properties to external files
+    /** @brief Saves the chessboard properties to external files from given image stream
 	Press space key to save the chessboard properties
 	Press S to save also the image
 	The function returns the number of objects that are successfully saved
-	@param capture VideoCapture object to get the image stream. If specified, it needs to be open. The default is camera #0
+	@param cap VideoCapture object to get the image stream. It must be opened.
 	@param delay Wait time between each frame
 	@param image_name Name of the image to be saved. Default saves image1.jpg, image2.jpg, ...
 	@param ext Extension of the image. The image is saved as image_name + #image + ext
 	*/
-    int save_chessboard(cv::VideoCapture *capture = new cv::VideoCapture(0), int delay = 1,
+    int save_chessboard(cv::VideoCapture &cap, int delay = 1,
                         std::string image_name = "image", std::string ext = ".jpg") const;
-
-    /** @brief This is an overloaded function, provided for convenience. It differs from the above function only in what argument(s) it accepts.
-	@param chessboard_images Sequence that contains chessboard images
-	@param display If true, the detected chessboard will be shown for each frame
-	*/
-    int save_chessboard(const std::vector<cv::Mat> &chessboard_images, bool display = false, int delay = 0) const;
 
     /** @brief Load the parameters from the external files
 	The function returns true if the parameters loaded successfuly
@@ -92,12 +84,11 @@ public:
                                     cv::Mat &img, std::string winname = "");
 
     /** @brief This is an overloaded function, provided for convenience. It differs from the above function only in what argument(s) it accepts.
-	@param cap The image stream that will be undistorted. If specified, it must be open
+	@param cap The image stream that will be undistorted. It must be opened.
 	@param winname Name of the window that the result will be displayed.
 	*/
     static void display_undistorted(const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs,
-                                    cv::VideoCapture *cap = new cv::VideoCapture(0),
-                                    std::string winname = "undistorted");
+                                    cv::VideoCapture &cap, std::string winname = "undistorted");
 };
 
 #endif // CALIBRATE_HPP

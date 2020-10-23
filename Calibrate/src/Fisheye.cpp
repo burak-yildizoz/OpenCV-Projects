@@ -64,9 +64,8 @@ void Fisheye::display_undistorted(const cv::Mat &cameraMatrix, const cv::Mat &di
 }
 
 void Fisheye::display_undistorted(const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs,
-                                  cv::VideoCapture *capture, std::string winname)
+                                  cv::VideoCapture &cap, std::string winname)
 {
-    cv::VideoCapture &cap = *capture;
     // make sure image stream is open
     CHECK(cap.isOpened());
     cv::Mat img;

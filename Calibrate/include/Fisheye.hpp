@@ -44,12 +44,11 @@ public:
                                     cv::Mat &img, std::string winname = "");
 
     /** @brief This is an overloaded function, provided for convenience. It differs from the above function only in what argument(s) it accepts.
-	@param cap The image stream that will be undistorted. If specified, it must be open
+	@param cap The image stream that will be undistorted. It must be opened.
 	@param winname Name of the window that the result will be displayed.
 	*/
     static void display_undistorted(const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs,
-                                    cv::VideoCapture *cap = new cv::VideoCapture(0),
-                                    std::string winname = "undistorted");
+                                    cv::VideoCapture &cap, std::string winname = "undistorted");
 };
 
 #endif // FISHEYE_HPP
