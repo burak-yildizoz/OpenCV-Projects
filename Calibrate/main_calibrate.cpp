@@ -20,7 +20,7 @@ int main()
 
 	// save object & image points to external files
 	//CHECK(cal.save_chessboard(&cap));
-	CHECK(cal.save_chessboard(new cv::VideoCapture("calibrate/image%1d.jpg"), 0)); // re-read from saved images
+	CHECK(cal.save_chessboard(new cv::VideoCapture("../data/pinhole/image%1d.jpg"), 0)); // re-read from saved images
 
 	cv::Size sz(cap.get(cv::CAP_PROP_FRAME_WIDTH), cap.get(cv::CAP_PROP_FRAME_HEIGHT));
 
@@ -32,7 +32,7 @@ int main()
 	std::vector<cv::Mat> imgs(num_imgs);
 	for (int i = 0; i < num_imgs; i++)
 	{
-		std::string filename = "calibrate/image" + std::to_string(i + 1) + ".jpg";
+		std::string filename = "../data/pinhole/image" + std::to_string(i + 1) + ".jpg";
 		imgs[i] = cv::imread(filename);
 		CHECK(!imgs[i].empty());
 		cv::Size size(imgs[0].cols, imgs[0].rows);
