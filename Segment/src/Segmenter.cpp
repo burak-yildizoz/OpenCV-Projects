@@ -4,10 +4,11 @@
 
 #include "Segmenter.hpp"
 #include "egbis.h"	// Efficient Graph-Based Image Segmentation algorithm
+#include "egbis/segment-image.h" // universe, segmentation
 #include "general.hpp"
 
 Segmenter::Segmenter(const cv::Mat& img, float sigma, float k, int min_size) :
-    _labelImage(img.size(), CV_8U), _sigma(sigma), _k(k), _min_size(min_size)
+    _sigma(sigma), _k(k), _min_size(min_size), _labelImage(img.size(), CV_8U)
 {
     // obtain segmentation results
     image<rgb> *nativeImage = convertMatToNativeImage(img);

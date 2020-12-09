@@ -1,0 +1,3 @@
+[submodule "Segment/egbis"]
+	path = Segment/egbis
+	url = git@github.com:burak-yildizoz/opencv-wrapper-egbis.git
