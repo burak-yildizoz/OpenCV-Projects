@@ -54,7 +54,7 @@ ww = int(w / (WW + 1))
 for i in range (0, HH):
     for j in range (0, WW):
         cropped_img = img[i*hh:(i+2)*hh, j*ww:(j+2)*ww]
-        filename = file + '/' + str(j + WW*i + 1) + ext
+        filename = file + '/' + str(j + WW*i) + ext
         ret = cv2.imwrite(filename, cropped_img)
         if not ret:
             print(filename + " failed")

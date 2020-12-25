@@ -4,6 +4,7 @@
 #include <iostream>
 #include <csignal>
 #include <vector>
+#include <fstream>
 #include <opencv2/core.hpp>
 
 #define DEBUG(cc) if(true) \
@@ -57,50 +58,49 @@ inline std::ostream& operator << (std::ostream& os, const cv::DMatch& d)
     return os;
 }
 
-// read data to cv::Mat of type CV_64F
-inline std::istream& operator >> (std::istream& is, cv::Mat& mat)
+inline void matwrite(const std::string& filename, const cv::Mat& mat)
 {
-    char ch = 0;
-    while (is.good() && ch != '[')
-        is >> ch;
-    CHECK(ch == '[');
-    std::vector<double> m(0);
-    size_t cols = 0;
-    bool end_of_file = false;
-    while ( is.good() && ! end_of_file )
+    std::ofstream fs(filename, std::fstream::binary);
+
+    // Header
+    int type = mat.type();
+    int channels = mat.channels();
+    fs.write((char*)&mat.rows, sizeof(int));    // rows
+    fs.write((char*)&mat.cols, sizeof(int));    // cols
+    fs.write((char*)&type, sizeof(int));        // type
+    fs.write((char*)&channels, sizeof(int));    // channels
+
+    // Data
+    if (mat.isContinuous())
     {
-        bool end_of_line = false;
-        std::vector<double> v(0);
-        while ( is.good() && ! end_of_line )
-        {
-            double d;
-            is >> d;
-            v.push_back(d);
-            char c;
-            is >> c;
-            switch (c)
-            {
-                case ']':
-                end_of_file = true;
-                case ';':
-                end_of_line = true;
-                break;
-                case ',':
-                break;
-                default:
-                std::cerr << "Unexpected character read: " << c << std::endl;
-                CHECK(false);
-            }
-        }
-        if (m.size() == 0)
-            cols = v.size();
-        else
-            CHECK(v.size() == cols);
-        m.insert(m.end(), v.begin(), v.end());
+        fs.write(mat.ptr<char>(0), (mat.dataend - mat.datastart));
     }
-    cv::Mat res(cv::Size(cols, m.size() / cols), CV_64F, m.data());
-    mat = res.clone();
-    return is;
+    else
+    {
+        int rowsz = CV_ELEM_SIZE(type) * mat.cols;
+        for (int r = 0; r < mat.rows; ++r)
+        {
+            fs.write(mat.ptr<char>(r), rowsz);
+        }
+    }
+}
+
+inline cv::Mat matread(const std::string& filename)
+{
+    std::ifstream fs(filename, std::fstream::binary);
+
+    // Header
+    int rows, cols, type, channels;
+    fs.read((char*)&rows, sizeof(int));         // rows
+    fs.read((char*)&cols, sizeof(int));         // cols
+    fs.read((char*)&type, sizeof(int));         // type
+    fs.read((char*)&channels, sizeof(int));     // channels
+
+    // Data
+    cv::Mat mat(rows, cols, type);
+    fs.read((char*)mat.data, CV_ELEM_SIZE(type) * rows * cols);
+
+    return mat;
 }
 
 // https://stackoverflow.com/questions/8936063/does-there-exist-a-static-warning#answer-8990275

@@ -23,18 +23,18 @@ int main(int argc, char *argv[])
         return imgops::resize(img, 480);
     };
 
-    // pano: ... 1 -> 2
-    Stitcher sfront(images(1));
-    cv::Mat patchImg = images(2);
+    // pano: ... 0 -> 1
+    Stitcher sfront(images(0));
+    cv::Mat patchImg = images(1);
     // add until patch image
     sfront.add(patchImg);
 
-    // pano: ... 3 -> 2
-    Stitcher sback(images(3));
+    // pano: ... 2 -> 1
+    Stitcher sback(images(2));
     // add until patch image
     sback.add(patchImg);
 
-    // merge: ... 1 -> 2 <- 3 ...
+    // merge: ... 0 -> 1 <- 2 ...
     std::pair<cv::Mat, cv::Point> patchedPano = Stitcher::patchPano(
         sfront.panoWithOrigin(), sback.panoWithOrigin());
     const cv::Mat &pano = patchedPano.first;
@@ -44,11 +44,11 @@ int main(int argc, char *argv[])
     cv::imshow("pano", pano);
     cv::waitKey();
 
-    // warp: ... 1 -> 2 <- 3 ...
+    // warp: ... 0 -> 1 <- 2 ...
     //                |
     //                v
-    //                4
-    cv::Mat nextImg = images(4);
+    //                3
+    cv::Mat nextImg = images(3);
     Stitcher scont(nextImg, pano, cv::Rect(patchedPano.second, patchImg.size()));
     // continue adding
 
