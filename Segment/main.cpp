@@ -13,33 +13,34 @@
 #include "imgops.hpp"	// image operations such as blend, rgb2gray, etc.
 #include "general.hpp"	// handy tools such as check, debug, etc.
 
-int main()
-{
-    //const std::string path = "Human9/img/";
-    //const int numimgs = 305;
-    //const std::string path = "Car2/img/";
-    //const int numimgs = 913;
-    const std::string path = "orchard_dataset_image/frame_";
-    const int numimgs = 332;
+#include <cstdlib>
 
-    auto filename = [&path](int num) -> std::string
-    {
-        //char numstr[5];
-        //sprintf_s(numstr, "%04d", num);
-        std::string numstr = std::to_string(num);
-        return path + numstr + ".jpg";
-    };
+int main(int argc, char **argv)
+{
+    const std::string path = (argc > 1) ? argv[1] : "../dataset/car/%04d.jpg";
+    const int cam_id = atoi(path.c_str());
 
     // create a colormap for displaying purposes
     std::vector<cv::Vec3b> rainbow = imgops::colormap(cv::COLORMAP_RAINBOW, true);
 
-    for (int i = 1; i <= numimgs; i++)
+    cv::VideoCapture cap;
+    if (cam_id || path == "0")
+        cap.open(cam_id);
+    else
+        cap.open(path);
+    CHECK(cap.isOpened());
+    cv::Mat img;
+    bool paused = false;
+
+    while (true)
     {
-        std::cout << i << std::endl;
         // read the image
-        cv::Mat img = cv::imread(filename(i), cv::IMREAD_COLOR);
-        assert(!img.empty());
+        cap >> img;
+        if (img.empty())
+            break;
         img = imgops::resize(img, 400);
+        if (img.channels() == 1)
+            cv::cvtColor(img, img, cv::COLOR_GRAY2BGR);
 
         // perform graph-based segmentation
         Segmenter segment(img);
@@ -170,9 +171,9 @@ int main()
         cv::imshow("feature matching", compFeature);
         cv::imshow("segmentation", compLabels);
         cv::imshow("matched segments", compTr);
-        char ch = cv::waitKey(1);
+        char ch = cv::waitKey(paused ? 0 : 1);
         if (ch == ' ')
-            ch = cv::waitKey();
+            paused = !paused;
         if (ch == 27)	// ESC
             break;
 

@@ -60,7 +60,8 @@ std::pair<std::vector<int>, std::vector<int>> Stitcher::findMatch(const cv::Mat 
 {
     // compute the raw matches
     std::vector<std::vector<cv::DMatch>> rawMatch;
-    matcher->knnMatch(nextDesc, prevDesc, rawMatch, 2);
+    if (prevDesc.rows > 2 && nextDesc.rows > 2)
+        matcher->knnMatch(nextDesc, prevDesc, rawMatch, 2);
     // initialize the list of actual matches
     std::vector<int> trainIDs, queryIDs;
     for (std::vector<cv::DMatch> &m : rawMatch)

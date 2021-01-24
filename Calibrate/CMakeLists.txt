@@ -27,4 +27,3 @@ list(APPEND SOURCES "src/Fisheye.cpp")
 
 add_executable(fisheye main_fisheye.cpp ${SOURCES})
 target_link_libraries(fisheye ${OpenCV_LIBS})
-

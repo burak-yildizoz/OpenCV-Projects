@@ -32,7 +32,7 @@ std::pair<cv::Mat, cv::Point> Stitcher::_calculatePano()
     for (cv::Point2f& pt : trainPts)
         pt += (cv::Point2f)prevOrig;
     cv::Mat corrH = findHomography(trainIDs, queryIDs, trainPts, queryPts).first;
-    
+
     return warpPano(img, prevPano, corrH);
 }
 
@@ -40,7 +40,8 @@ std::pair<std::vector<int>, std::vector<int>> Stitcher::findMatch(const cv::Mat 
 {
     // compute the raw matches
     std::vector<std::vector<cv::DMatch>> rawMatch;
-    matcher->knnMatch(nextDesc, prevDesc, rawMatch, 2);
+    if (prevDesc.rows > 2 && nextDesc.rows > 2)
+        matcher->knnMatch(nextDesc, prevDesc, rawMatch, 2);
     // initialize the list of actual matches
     std::vector<int> trainIDs, queryIDs;
     for (std::vector<cv::DMatch> &m : rawMatch)
@@ -338,7 +339,7 @@ Stitcher::Stitcher(const cv::Mat& img, const cv::Mat& lastPano, cv::Rect lastRec
     Feature feature(imgops::rgb2gray(img));
     _features.push_back(prevFeature);
     _features.push_back(feature);
-    
+
     // find the matching features
     std::pair<std::vector<int>, std::vector<int>> match = findMatch(prevFeature.desc, feature.desc);
     const std::vector<int> &trainIDs = match.first;
@@ -351,7 +352,7 @@ Stitcher::Stitcher(const cv::Mat& img, const cv::Mat& lastPano, cv::Rect lastRec
     std::pair<cv::Mat, std::vector<bool>> homography = findHomography(trainIDs, queryIDs, trainPts, queryPts);
     _homographies.push_back(homography.first);
     _status.push_back(homography.second);
-    
+
     // calculate the last pano
     for (cv::Point2f& pt : trainPts)
         pt += (cv::Point2f)lastRect.tl();

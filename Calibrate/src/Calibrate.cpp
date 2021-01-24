@@ -78,6 +78,8 @@ int Calibrate::save_chessboard(cv::VideoCapture &cap, int delay, std::string ima
             cv::destroyWindow(winname);
             return false;
         }
+        if (img.channels() == 1)
+            cv::cvtColor(img, img, cv::COLOR_GRAY2BGR);
 
         // check if image contains chessboard
         bool found = findChessboardCorners(img, board_sz, corners,
