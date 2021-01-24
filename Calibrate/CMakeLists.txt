@@ -10,9 +10,8 @@ endif(WIN32)
 find_package(OpenCV REQUIRED)
 
 set(CMAKE_CXX_STANDARD 11)
-add_compile_options(-Wall)
 if(NOT WIN32)
-  add_compile_options(-Wextra -Wpedantic)
+  add_compile_options(-Wall -Wextra -Wpedantic)
   add_compile_options(-pthread)
 endif(NOT WIN32)
 

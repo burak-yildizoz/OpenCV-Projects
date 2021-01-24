@@ -53,7 +53,7 @@ int main(int argc, char **argv)
         static cv::Mat lastImg = img;
         Feature lastFeature(imgops::rgb2gray(lastImg));
         std::pair<std::vector<int>, std::vector<int>> matches = Stitcher::findMatch(lastFeature.desc, feature.desc);
-        std::vector<bool> status = Stitcher::findHomography(matches.first, matches.second, lastFeature.kps, feature.kps).second;
+        std::vector<bool> status = Stitcher::findHomography(matches.first, matches.second, lastFeature.getKeypoints(), feature.getKeypoints()).second;
         std::vector<int> trainIDs, queryIDs;
         trainIDs.reserve(status.size());
         queryIDs.reserve(status.size());
@@ -90,10 +90,10 @@ int main(int argc, char **argv)
             // if the segment has matched any segment from previous image
             if (featuresOfSegments[i].size())
             {
-                std::pair<int,int> occurrence = most_frequent_element(featuresOfSegments[i]);
+                std::pair<int,int> occurrence = general::most_frequent_element(featuresOfSegments[i]);
                 int prevID = occurrence.first;
                 // make sure it is also matched the other way around
-                std::pair<int, int> lastOccurrence = most_frequent_element(featuresOfPrevSegments[prevID]);
+                std::pair<int, int> lastOccurrence = general::most_frequent_element(featuresOfPrevSegments[prevID]);
                 int nextID = lastOccurrence.first;
                 if ((int)i == nextID)
                 {

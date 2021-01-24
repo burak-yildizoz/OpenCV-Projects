@@ -5,6 +5,7 @@
 #include <csignal>
 #include <vector>
 #include <fstream>
+#include <map>
 #include <opencv2/core.hpp>
 
 #define DEBUG(cc) if(true) \
@@ -58,49 +59,73 @@ inline std::ostream& operator << (std::ostream& os, const cv::DMatch& d)
     return os;
 }
 
-inline void matwrite(const std::string& filename, const cv::Mat& mat)
+namespace general
 {
-    std::ofstream fs(filename, std::fstream::binary);
-
-    // Header
-    int type = mat.type();
-    int channels = mat.channels();
-    fs.write((char*)&mat.rows, sizeof(int));    // rows
-    fs.write((char*)&mat.cols, sizeof(int));    // cols
-    fs.write((char*)&type, sizeof(int));        // type
-    fs.write((char*)&channels, sizeof(int));    // channels
-
-    // Data
-    if (mat.isContinuous())
+    inline void matwrite(const std::string& filename, const cv::Mat& mat)
     {
-        fs.write(mat.ptr<char>(0), (mat.dataend - mat.datastart));
-    }
-    else
-    {
-        int rowsz = CV_ELEM_SIZE(type) * mat.cols;
-        for (int r = 0; r < mat.rows; ++r)
+        std::ofstream fs(filename, std::fstream::binary);
+
+        // Header
+        int type = mat.type();
+        int channels = mat.channels();
+        fs.write((char*)&mat.rows, sizeof(int));    // rows
+        fs.write((char*)&mat.cols, sizeof(int));    // cols
+        fs.write((char*)&type, sizeof(int));        // type
+        fs.write((char*)&channels, sizeof(int));    // channels
+
+        // Data
+        if (mat.isContinuous())
         {
-            fs.write(mat.ptr<char>(r), rowsz);
+            fs.write(mat.ptr<char>(0), (mat.dataend - mat.datastart));
+        }
+        else
+        {
+            int rowsz = CV_ELEM_SIZE(type) * mat.cols;
+            for (int r = 0; r < mat.rows; ++r)
+            {
+                fs.write(mat.ptr<char>(r), rowsz);
+            }
         }
     }
-}
 
-inline cv::Mat matread(const std::string& filename)
-{
-    std::ifstream fs(filename, std::fstream::binary);
+    inline cv::Mat matread(const std::string& filename)
+    {
+        std::ifstream fs(filename, std::fstream::binary);
 
-    // Header
-    int rows, cols, type, channels;
-    fs.read((char*)&rows, sizeof(int));         // rows
-    fs.read((char*)&cols, sizeof(int));         // cols
-    fs.read((char*)&type, sizeof(int));         // type
-    fs.read((char*)&channels, sizeof(int));     // channels
+        // Header
+        int rows, cols, type, channels;
+        fs.read((char*)&rows, sizeof(int));         // rows
+        fs.read((char*)&cols, sizeof(int));         // cols
+        fs.read((char*)&type, sizeof(int));         // type
+        fs.read((char*)&channels, sizeof(int));     // channels
 
-    // Data
-    cv::Mat mat(rows, cols, type);
-    fs.read((char*)mat.data, CV_ELEM_SIZE(type) * rows * cols);
+        // Data
+        cv::Mat mat(rows, cols, type);
+        fs.read((char*)mat.data, CV_ELEM_SIZE(type) * rows * cols);
 
-    return mat;
+        return mat;
+    }
+
+    // find the most frequent element in any container
+    // {mostFrequentElement, maxFrequency}
+    template <typename T>
+    std::pair<typename T::value_type, int> most_frequent_element(T const& v)
+    {
+        // Precondition: v is not empty
+        std::map<typename T::value_type, int> frequencyMap;
+        int maxFrequency = 0;
+        typename T::value_type mostFrequentElement{};
+        for (auto&& x : v)
+        {
+            int f = ++frequencyMap[x];
+            if (f > maxFrequency)
+            {
+                maxFrequency = f;
+                mostFrequentElement = x;
+            }
+        }
+        return std::make_pair(mostFrequentElement, maxFrequency);
+    }
 }
 
 // https://stackoverflow.com/questions/8936063/does-there-exist-a-static-warning#answer-8990275

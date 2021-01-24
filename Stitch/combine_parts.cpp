@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
                          0, 1, 1, 1, 1, 0,
                          1, 1, 1, 1, 0, 0) * 255;
     if (!matpath.empty())
-        local_map = matread(matpath);
+        local_map = general::matread(matpath);
     CHECK(!local_map.empty());
     cv::imshow(winname, local_map);
     std::cout << local_map.size() << std::endl;
