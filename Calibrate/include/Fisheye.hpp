@@ -27,11 +27,9 @@ public:
 	@param cameraMatrix 3x3 matrix that represents intrinsic parameters
 	@param distCoeffs Distortion coefficients
 	*/
-    static void calibrate_camera(const std::vector<std::vector<cv::Point3f>> &objectPoints,
+    void calibrate_camera(const std::vector<std::vector<cv::Point3f>> &objectPoints,
                                  const std::vector<std::vector<cv::Point2f>> &imagePoints,
-                                 cv::Size imageSize,
-                                 cv::Mat &cameraMatrix,
-                                 cv::Mat &distCoeffs);
+                                 cv::Size imageSize);
 
     /** @brief Given camera calibration parameters, undistorts the image and displays the result
 	@param cameraMatrix 3x3 matrix that represents intrinsic parameters
@@ -40,15 +38,13 @@ public:
 	@param winname Name of the window that the result will be displayed. If it is empty, the window is held until user presses a key, and img becomes the resulting image. Else, waitKey needs to be called
 	@note Do not specify *winname* to wait until user presses a key
 	*/
-    static void display_undistorted(const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs,
-                                    cv::Mat &img, std::string winname = "");
+    void display_undistorted(cv::Mat &img, std::string winname = "");
 
     /** @brief This is an overloaded function, provided for convenience. It differs from the above function only in what argument(s) it accepts.
 	@param cap The image stream that will be undistorted. It must be opened.
 	@param winname Name of the window that the result will be displayed.
 	*/
-    static void display_undistorted(const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs,
-                                    cv::VideoCapture &cap, std::string winname = "undistorted");
+    void display_undistorted(cv::VideoCapture &cap, std::string winname = "undistorted");
 };
 
 #endif // FISHEYE_HPP

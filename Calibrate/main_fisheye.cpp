@@ -7,9 +7,9 @@ int main(int argc, char *argv[])
     const int num_imgs = (argc > 1) ? atoi(argv[1]) : 5;
     // calculate intrinsics from given data
     // example: samples/data/left%02d.jpg
-    const char *img_stream = (argc > 2) ? argv[2] : "../data/fisheye/image%1d.jpg";
+    const char *img_stream = (argc > 2) ? argv[2] : "../data/fisheye/left%2d.jpg";
     // display results on test data
-    const char *res_stream = (argc > 3) ? argv[3] : "1";
+    const char *res_stream = (argc > 3) ? argv[3] : "0";
 
     Fisheye cal(num_imgs);
 
@@ -43,17 +43,19 @@ int main(int argc, char *argv[])
     CHECK(cal.load_chessboard(object_points, image_points));
 
     // get camera matrix and distortion coefficients
-    cv::Mat intrinsics, distCoeffs;
-    cal.calibrate_camera(object_points, image_points, sz, intrinsics, distCoeffs);
+    cal.calibrate_camera(object_points, image_points, sz);
 
     // display the results
     // display the results
+    cap.release();
+
     if (strcmp(img_stream, res_stream) != 0)
-    {
-        cap.release();
         setCap(res_stream);
-    }
-    cal.display_undistorted(intrinsics, distCoeffs, cap);
+    else
+        setCap(img_stream);
+    CHECK(cap.isOpened());
+
+    cal.display_undistorted(cap);
 
     return 0;
 }

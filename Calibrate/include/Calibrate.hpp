@@ -14,12 +14,12 @@ class Calibrate
     int _numCornersVer;
     std::string _object_filename;
     std::string _image_filename;
-
 protected:
     // helper function for *save_chessboard*
     template <class T>
     static void write_to_file(std::string filename, const std::vector<std::vector<T>> &obj);
-
+    cv::Mat cameraMatrix;
+    cv::Mat distCoeffs;
 public:
     const int &numBoards = _numBoards; // number of chessboard images to be calibrated
     // if the chessboard is 8x8, then both number of corners should be 7
@@ -27,7 +27,6 @@ public:
     const int &numCornersVer = _numCornersVer;             // number of corners along height
     const std::string &object_filename = _object_filename; // external filename for object points
     const std::string &image_filename = _image_filename;   // external filename for image points
-
     /** @brief Class for camera calibration
 	@param numBoards number of chessboard images to be calibrated
 	@param numCornersHor number of corners along width
@@ -67,11 +66,9 @@ public:
 	@param cameraMatrix 3x3 matrix that represents intrinsic parameters. An empty matrix is converted to have fx=fy=1
 	@param distCoeffs Distortion coefficients
 	*/
-    static void calibrate_camera(const std::vector<std::vector<cv::Point3f>> &objectPoints,
+    void calibrate_camera(const std::vector<std::vector<cv::Point3f>> &objectPoints,
                                  const std::vector<std::vector<cv::Point2f>> &imagePoints,
-                                 cv::Size imageSize,
-                                 cv::Mat &cameraMatrix,
-                                 cv::Mat &distCoeffs);
+                                 cv::Size imageSize);
 
     /** @brief Given camera calibration parameters, undistorts the image and displays the result
 	@param cameraMatrix 3x3 matrix that represents intrinsic parameters
@@ -80,15 +77,13 @@ public:
 	@param winname Name of the window that the result will be displayed. If it is empty, the window is held until user presses a key, and img becomes the resulting image. Else, waitKey needs to be called
 	@note Do not specify *winname* to wait until user presses a key
 	*/
-    static void display_undistorted(const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs,
-                                    cv::Mat &img, std::string winname = "");
+    void display_undistorted(cv::Mat &img, std::string winname = "");
 
     /** @brief This is an overloaded function, provided for convenience. It differs from the above function only in what argument(s) it accepts.
 	@param cap The image stream that will be undistorted. It must be opened.
 	@param winname Name of the window that the result will be displayed.
 	*/
-    static void display_undistorted(const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs,
-                                    cv::VideoCapture &cap, std::string winname = "undistorted");
+    void display_undistorted(cv::VideoCapture &cap, std::string winname = "undistorted");
 };
 
 #endif // CALIBRATE_HPP

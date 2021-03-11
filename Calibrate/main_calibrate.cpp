@@ -44,16 +44,18 @@ int main(int argc, char *argv[])
     CHECK(cal.load_chessboard(object_points, image_points));
 
     // get camera matrix and distortion coefficients
-    cv::Mat intrinsics, distCoeffs;
-    cal.calibrate_camera(object_points, image_points, sz, intrinsics, distCoeffs);
+    cal.calibrate_camera(object_points, image_points, sz);
 
     // display the results
+    cap.release();
+
     if (strcmp(img_stream, res_stream) != 0)
-    {
-        cap.release();
         setCap(res_stream);
-    }
-    cal.display_undistorted(intrinsics, distCoeffs, cap);
+    else
+        setCap(img_stream);
+    CHECK(cap.isOpened());
+
+    cal.display_undistorted(cap);
 
     return 0;
 }

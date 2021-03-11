@@ -18,19 +18,8 @@ Fisheye::Fisheye(int numBoards, int numCornersHor, int numCornersVer,
 
 void Fisheye::calibrate_camera(const std::vector<std::vector<cv::Point3f>> &objectPoints,
                                const std::vector<std::vector<cv::Point2f>> &imagePoints,
-                               cv::Size imageSize,
-                               cv::Mat &cameraMatrix,
-                               cv::Mat &distCoeffs)
+                               cv::Size imageSize)
 {
-    if (cameraMatrix.empty())
-    {
-        /*
-            [fx 0  cx
-              0 fy cy
-              0  0  1]
-        */
-        cameraMatrix = cv::Mat(3, 3, CV_32FC1);
-    }
     if (distCoeffs.empty())
         distCoeffs = cv::Mat(4, 1, CV_32FC1);
     std::vector<cv::Mat> rvecs, tvecs;
@@ -40,10 +29,10 @@ void Fisheye::calibrate_camera(const std::vector<std::vector<cv::Point3f>> &obje
     double rms = cv::fisheye::calibrate(objectPoints, imagePoints, imageSize, cameraMatrix, distCoeffs,
                                         rvecs, tvecs, flags, criteria);
     std::cout << "Calibration done! rms = " << rms << std::endl;
+    DEBUG(cameraMatrix);
 }
 
-void Fisheye::display_undistorted(const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs,
-                                  cv::Mat &img, std::string winname)
+void Fisheye::display_undistorted(cv::Mat &img, std::string winname)
 {
     CHECK(!img.empty());
     bool show_once = winname.empty();
@@ -52,6 +41,7 @@ void Fisheye::display_undistorted(const cv::Mat &cameraMatrix, const cv::Mat &di
     cv::Mat map1, map2;
     cv::fisheye::initUndistortRectifyMap(cameraMatrix, distCoeffs, cv::Mat::eye(3, 3, CV_32FC1),
                                          cameraMatrix, img.size(), CV_16SC2, map1, map2);
+
     cv::Mat imageUndistorted;
     cv::remap(img, imageUndistorted, map1, map2, cv::INTER_LINEAR, cv::BORDER_CONSTANT);
     imshow(winname, imageUndistorted);
@@ -63,8 +53,7 @@ void Fisheye::display_undistorted(const cv::Mat &cameraMatrix, const cv::Mat &di
     }
 }
 
-void Fisheye::display_undistorted(const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs,
-                                  cv::VideoCapture &cap, std::string winname)
+void Fisheye::display_undistorted(cv::VideoCapture &cap, std::string winname)
 {
     // make sure image stream is open
     CHECK(cap.isOpened());
@@ -84,8 +73,8 @@ void Fisheye::display_undistorted(const cv::Mat &cameraMatrix, const cv::Mat &di
             std::cout << "End of image stream!" << std::endl;
             break;
         }
-        display_undistorted(cameraMatrix, distCoeffs, img, winname);
-        ch = cv::waitKey(1);
+        display_undistorted(img, winname);
+        ch = cv::waitKey();
         cap >> img;
     }
     cv::destroyWindow(winname);

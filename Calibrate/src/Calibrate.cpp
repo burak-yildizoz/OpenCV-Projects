@@ -203,29 +203,22 @@ bool Calibrate::load_chessboard(std::vector<std::vector<cv::Point3f>> &object_po
 
 void Calibrate::calibrate_camera(const std::vector<std::vector<cv::Point3f>> &objectPoints,
                                  const std::vector<std::vector<cv::Point2f>> &imagePoints,
-                                 cv::Size imageSize,
-                                 cv::Mat &cameraMatrix,
-                                 cv::Mat &distCoeffs)
+                                 cv::Size imageSize)
 {
     std::vector<cv::Mat> rvecs, tvecs;
-    if (cameraMatrix.empty())
-    {
-        /*
-            [fx 0  cx
-              0 fy cy
-              0  0  1]
-        */
-        cameraMatrix = cv::Mat(3, 3, CV_32FC1);
-        cameraMatrix.ptr<float>(0)[0] = 1; // fx
-        cameraMatrix.ptr<float>(1)[1] = 1; // fy
-    }
     std::cout << "Calibrating!" << std::endl;
-    calibrateCamera(objectPoints, imagePoints, imageSize, cameraMatrix, distCoeffs, rvecs, tvecs);
+    cv::calibrateCamera(objectPoints, imagePoints, imageSize, cameraMatrix, distCoeffs, rvecs, tvecs);
     std::cout << "Calibration done!" << std::endl;
+
+    for (int i = 0; i < cameraMatrix.rows; i++)
+    {
+        for (int j = 0; j < cameraMatrix.cols; j++)
+            std::cout << cameraMatrix.at<float>(i, j) << "\t";
+        std::cout << "\n";
+    }
 }
 
-void Calibrate::display_undistorted(const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs,
-                                    cv::Mat &img, std::string winname)
+void Calibrate::display_undistorted(cv::Mat &img, std::string winname)
 {
     CHECK(!img.empty());
     bool show_once = winname.empty();
@@ -242,8 +235,7 @@ void Calibrate::display_undistorted(const cv::Mat &cameraMatrix, const cv::Mat &
     }
 }
 
-void Calibrate::display_undistorted(const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs,
-                                    cv::VideoCapture &cap, std::string winname)
+void Calibrate::display_undistorted(cv::VideoCapture &cap, std::string winname)
 {
     // make sure image stream is open
     CHECK(cap.isOpened());
@@ -263,8 +255,8 @@ void Calibrate::display_undistorted(const cv::Mat &cameraMatrix, const cv::Mat &
             std::cout << "End of image stream!" << std::endl;
             break;
         }
-        display_undistorted(cameraMatrix, distCoeffs, img, winname);
-        ch = cv::waitKey(1);
+        display_undistorted(img, winname);
+        ch = cv::waitKey();
         cap >> img;
     }
     cv::destroyWindow(winname);
