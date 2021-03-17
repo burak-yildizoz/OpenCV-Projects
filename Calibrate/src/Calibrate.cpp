@@ -83,14 +83,14 @@ int Calibrate::save_chessboard(cv::VideoCapture &cap, int delay, std::string ima
 
         // check if image contains chessboard
         bool found = findChessboardCorners(img, board_sz, corners,
-                                           CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FILTER_QUADS);
+                                           cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_FILTER_QUADS);
         cv::Mat disp_img = img.clone();
         if (found)
         {
             cv::Mat gray;
-            cvtColor(img, gray, CV_BGR2GRAY);
+            cvtColor(img, gray, cv::COLOR_BGR2GRAY);
             cornerSubPix(gray, corners, cv::Size(11, 11), cv::Size(-1, -1),
-                         cv::TermCriteria(CV_TERMCRIT_EPS | CV_TERMCRIT_ITER, 30, 0.1));
+                         cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::COUNT, 30, 0.1));
             drawChessboardCorners(disp_img, board_sz, corners, found);
         }
 
