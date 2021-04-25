@@ -85,27 +85,27 @@ int main(int argc, char **argv)
 
         // decide segment matching
         std::vector<int> prevIDs, currIDs;
-        for (size_t i = 0; i < featuresOfSegments.size(); i++)
+        for (int i = 0; i < static_cast<int>(featuresOfSegments.size()); i++)
         {
             // if the segment has matched any segment from previous image
             if (featuresOfSegments[i].size())
             {
-                std::pair<int,int> occurrence = general::most_frequent_element(featuresOfSegments[i]);
+                std::pair<int, int> occurrence = general::most_frequent_element(featuresOfSegments[i]);
                 int prevID = occurrence.first;
                 // make sure it is also matched the other way around
                 std::pair<int, int> lastOccurrence = general::most_frequent_element(featuresOfPrevSegments[prevID]);
                 int nextID = lastOccurrence.first;
-                if ((int)i == nextID)
+                if (i == nextID)
                 {
                     prevIDs.push_back(prevID);
                     currIDs.push_back(i);
                     int count = occurrence.second;
                     size_t total = featuresOfSegments[i].size();
-                    printf("%zu is matched with %d with certainity %d/%zu\n", i, prevID, count, total);
+                    printf("%d is matched with %d with certainity %d/%zu\n", i, prevID, count, total);
                 }
                 else
                 {
-                    // printf("%zu is matched with %d but %d matches with %d\n", i, prevID, prevID, nextID);
+                    // printf("%d is matched with %d but %d matches with %d\n", i, prevID, prevID, nextID);
                 }
             }
         }

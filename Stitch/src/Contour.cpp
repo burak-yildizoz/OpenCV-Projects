@@ -1,5 +1,5 @@
 #include <opencv2/imgproc.hpp>
-
+#include <cmath>
 #include "Contour.hpp"
 
 Contour::Contour(std::vector<cv::Point> contourPoints) :
@@ -25,7 +25,7 @@ cv::Rect Contour::box() const
 
 cv::Point Contour::weightedCenter() const
 {
-    return cv::Point(_m.m10 / _m.m00, _m.m01 / _m.m00);
+    return cv::Point(static_cast<int>(_m.m10 / _m.m00), static_cast<int>(_m.m01 / _m.m00));
 }
 
 std::vector<cv::Point> Contour::contourPoints() const

@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
     // save object & image points to external files
     CHECK(cal.save_chessboard(cap, delay));
 
-    cv::Size sz(cap.get(cv::CAP_PROP_FRAME_WIDTH), cap.get(cv::CAP_PROP_FRAME_HEIGHT));
+    cv::Size sz(static_cast<int>(cap.get(cv::CAP_PROP_FRAME_WIDTH)), static_cast<int>(cap.get(cv::CAP_PROP_FRAME_HEIGHT)));
 
     // read object & image points from external files
     std::vector<std::vector<cv::Point3f>> object_points;

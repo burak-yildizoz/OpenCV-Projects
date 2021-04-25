@@ -92,7 +92,7 @@ size_t outputSize(const cv::Mat& B)
             cv::Mat image(B, cv::Rect(j, i, 8, 8));
             std::multiset< std::pair<int, int> > mset;  // runlength, size
             int runlength = 0;
-            int diff = sqrt(pow2(abs(image.at<int16_t>(0, 0) - dc)));
+            int diff = static_cast<int>(sqrt(pow2(abs(image.at<int16_t>(0, 0) - dc))));
             mset.insert(std::pair<int, int>(runlength, diff));
             dc = image.at<int16_t>(0, 0);
             for (int k = 1; k < 64; k++)
@@ -104,7 +104,7 @@ size_t outputSize(const cv::Mat& B)
                 }
                 else
                 {
-                    int sz = sqrt(pow2(abs(p)));
+                    int sz = static_cast<int>(sqrt(pow2(abs(p))));
                     while (runlength > 15)
                     {
                         mset.insert(std::pair<int, int>(15, 0));
@@ -121,7 +121,7 @@ size_t outputSize(const cv::Mat& B)
             while (it != mset.end())
             {
                 std::pair<It, It> ret = mset.equal_range(*it);
-                probabilities.push_back(std::pair<int, int>(std::distance(ret.first, ret.second), std::distance(mset.begin(), it)));
+                probabilities.push_back(std::pair<int, int>(static_cast<int>(std::distance(ret.first, ret.second)), static_cast<int>(std::distance(mset.begin(), it))));
                 it = ret.second;
             }
             std::vector<int> prob_idx(probabilities.size(), 0); // huffman bit count of index of probabilities
@@ -151,7 +151,7 @@ size_t outputSize(const cv::Mat& B)
             }
         }
     }
-    return output_size;
+    return static_cast<size_t>(output_size);
 }
 
 cv::Mat quantize(unsigned quality, bool chrominance)
@@ -322,6 +322,7 @@ int main(int argc, char* argv[])
     std::string input = "armut.bmp";
     if (argc == 2)
         input = argv[1];
+    DEBUG(input);
     cv::Mat A = cv::imread(input);
     assert(!A.empty());
     cv::Mat disp_orig = A.clone();

@@ -9,7 +9,7 @@ namespace imgops
     cv::Mat resize(const cv::Mat &img, int width)
     {
         cv::Mat resized;
-        cv::Size dsize(width, img.rows * ((double)width / img.cols));
+        cv::Size dsize(width, img.rows * width / img.cols);
         cv::resize(img, resized, dsize);
         return resized;
     }
@@ -111,7 +111,7 @@ void ConnectImages::connectCenters(cv::Mat& compImg,
         const int& queryID = queryIDs[i];
         cv::Point prevCenter = trainKps[trainID].pt;
         cv::Point nextCenter = queryKps[queryID].pt;
-        cv::line(compImg, prevCenter + _prevRect.tl(), nextCenter + _nextRect.tl(), CV_RGB(0, 255, 0), 1, CV_AA);
+        cv::line(compImg, prevCenter + _prevRect.tl(), nextCenter + _nextRect.tl(), CV_RGB(0, 255, 0), 1, cv::LINE_AA);
     }
     if (markCenters)
     {
@@ -123,8 +123,8 @@ void ConnectImages::connectCenters(cv::Mat& compImg,
             const int& queryID = queryIDs[i];
             cv::Point prevCenter = trainKps[trainID].pt;
             cv::Point nextCenter = queryKps[queryID].pt;
-            cv::circle(compImg, prevCenter + _prevRect.tl(), 2, CV_RGB(255, 0, 0), CV_FILLED, CV_AA);
-            cv::circle(compImg, nextCenter + _nextRect.tl(), 2, CV_RGB(0, 0, 255), CV_FILLED, CV_AA);
+            cv::circle(compImg, prevCenter + _prevRect.tl(), 2, CV_RGB(255, 0, 0), cv::FILLED, cv::LINE_AA);
+            cv::circle(compImg, nextCenter + _nextRect.tl(), 2, CV_RGB(0, 0, 255), cv::FILLED, cv::LINE_AA);
         }
     }
 }
@@ -146,7 +146,7 @@ void ConnectImages::connectCenters(cv::Mat& compImg,
         cv::Point nextCenter = nextContour.center();
         const cv::Vec3b& origColor = nextColors[nextIDs[i]];
         cv::Vec3b color = invertedColor ? (cv::Vec3b::all(255) - origColor) : origColor;
-        cv::line(compImg, prevCenter + _prevRect.tl(), nextCenter + _nextRect.tl(), color, 1, CV_AA);
+        cv::line(compImg, prevCenter + _prevRect.tl(), nextCenter + _nextRect.tl(), color, 1, cv::LINE_AA);
     }
 }
 
@@ -210,6 +210,14 @@ void ConnectImages::drawContours(cv::Mat& compImg,
     }
 }
 
+namespace
+{
+    cv::Vec3b scalar2vec3b(cv::Scalar s)
+    {
+        return cv::Vec3b(static_cast<int>(s[0]), static_cast<int>(s[1]), static_cast<int>(s[2]));
+    }
+}
+
 void ConnectImages::numberPoints(cv::Mat& compImg,
     const std::vector<Contour>& prevContours, const std::vector<Contour>& nextContours,
     const std::vector<int>& prevIDs, const std::vector<int>& nextIDs,
@@ -226,7 +234,7 @@ void ConnectImages::numberPoints(cv::Mat& compImg,
     {
         int prevID = prevIDs[i];
         cv::Point pt = prevContours[prevID].center();
-        cv::Vec3b targetColor(color[0], color[1], color[2]);
+        cv::Vec3b targetColor = scalar2vec3b(color);
         if (!color_provided)
             targetColor = invertedColor ? (cv::Vec3b::all(255) - prevColors[prevID]) : prevColors[prevID];
         std::string num = std::to_string(prevID);
@@ -236,7 +244,7 @@ void ConnectImages::numberPoints(cv::Mat& compImg,
     {
         int nextID = nextIDs[i];
         cv::Point pt = nextContours[nextID].center();
-        cv::Vec3b targetColor(color[0], color[1], color[2]);
+        cv::Vec3b targetColor = scalar2vec3b(color);
         if (!color_provided)
             targetColor = invertedColor ? (cv::Vec3b::all(255) - nextColors[nextID]) : nextColors[nextID];
         std::string num = std::to_string(nextID);

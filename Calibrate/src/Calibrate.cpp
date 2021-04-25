@@ -62,7 +62,7 @@ int Calibrate::save_chessboard(cv::VideoCapture &cap, int delay, std::string ima
     // here, the length of the square is assumed to be 1mm
     std::vector<cv::Point3f> obj;
     for (int j = 0; j < numSquares; j++)
-        obj.push_back(cv::Point3f(j / numCornersHor, j % numCornersHor, 0.0f));
+        obj.push_back(cv::Point3f(static_cast<float>(j / numCornersHor), static_cast<float>(j % numCornersHor), 0.0f));
 
     std::vector<std::vector<cv::Point3f>> object_points;
     std::vector<std::vector<cv::Point2f>> image_points;

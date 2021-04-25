@@ -17,6 +17,7 @@ int main(int argc, char *argv[])
     auto filename = [&prepath, &postpath](int num) -> std::string {
         return prepath + std::to_string(num) + postpath;
     };
+    DEBUG(filename(0));
 
     auto images = [&filename](int num) -> cv::Mat {
         cv::Mat img = cv::imread(filename(num), cv::IMREAD_COLOR);

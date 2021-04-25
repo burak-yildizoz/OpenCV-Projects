@@ -89,10 +89,12 @@ std::pair<cv::Mat, std::vector<bool>> Stitcher::findHomography(
 cv::Rect Stitcher::warpRect(cv::Size sz, const cv::Mat &H)
 {
     std::vector<cv::Point2f> corners(4);
-    corners[0] = cv::Point2f(0, 0);                // top left
-    corners[1] = cv::Point2f(sz.width, 0);         // top right
-    corners[2] = cv::Point2f(0, sz.height);        // bottom left
-    corners[3] = cv::Point2f(sz.width, sz.height); // bottom right
+    float w = static_cast<float>(sz.width);
+    float h = static_cast<float>(sz.height);
+    corners[0] = cv::Point2f(0, 0); // top left
+    corners[1] = cv::Point2f(w, 0); // top right
+    corners[2] = cv::Point2f(0, h); // bottom left
+    corners[3] = cv::Point2f(w, h); // bottom right
     std::vector<cv::Point2f> warpedCorners;
     cv::perspectiveTransform(corners, warpedCorners, H);
     return cv::boundingRect(warpedCorners);

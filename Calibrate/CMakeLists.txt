@@ -1,19 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(calibrate)
 
-if(WIN32)
-  # put opencv_world???.dll near the final executable before running
-  # which is located at "${OpenCV_DIR}/../bin"
-  set(OpenCV_DIR "C:/opencv/build/x64/vc15/lib")
-endif(WIN32)
-
-find_package(OpenCV REQUIRED)
-
-set(CMAKE_CXX_STANDARD 11)
-if(NOT WIN32)
-  add_compile_options(-Wall -Wextra -Wpedantic)
-  add_compile_options(-pthread)
-endif(NOT WIN32)
+include(${CMAKE_CURRENT_LIST_DIR}/../CMake_OpenCV.txt)
 
 include_directories("include")
 
