@@ -24,8 +24,7 @@ void Calibrate::write_to_file(std::string filename,
 }
 
 Calibrate::Calibrate(int numBoards, int numCornersHor, int numCornersVer,
-                     const std::string &object_filename,
-                     const std::string &image_filename)
+                     std::string object_filename, std::string image_filename)
     : _numBoards(numBoards), _numCornersHor(numCornersHor),
       _numCornersVer(numCornersVer), _object_filename(object_filename),
       _image_filename(image_filename) {
@@ -47,6 +46,7 @@ int Calibrate::save_chessboard(cv::VideoCapture &cap, int delay,
 
   std::cout << "Press space key to save the chessboard properties\n"
                "Press S to save also the image\n"
+               "Press any other key to skip the current image\n"
                "Press ESC to cancel and quit\n"
             << std::endl;
 
@@ -55,25 +55,25 @@ int Calibrate::save_chessboard(cv::VideoCapture &cap, int delay,
   cv::namedWindow(winname);
 
   // required for object points
-  int numSquares = numCornersHor * numCornersVer;
+  int numSquares = _numCornersHor * _numCornersVer;
   // the chessboard is assumed to be on the xy-plane
   // and the physical length of the edges does not really matter
   // (0,0,0), (0,1,0), (0,2,0), ..., (0,5,8)
   // here, the length of the square is assumed to be 1mm
   std::vector<cv::Point3f> obj;
   for (int j = 0; j < numSquares; j++)
-    obj.push_back(cv::Point3f(static_cast<float>(j / numCornersHor),
-                              static_cast<float>(j % numCornersHor), 0.0f));
+    obj.push_back(cv::Point3f(static_cast<float>(j / _numCornersHor),
+                              static_cast<float>(j % _numCornersHor), 0.0f));
 
   std::vector<std::vector<cv::Point3f>> object_points;
   std::vector<std::vector<cv::Point2f>> image_points;
   std::vector<cv::Point2f> corners;
-  const cv::Size board_sz(numCornersHor, numCornersVer);
+  const cv::Size board_sz(_numCornersHor, _numCornersVer);
   int successes = 0;
 
-  while (successes < numBoards) {
+  while (successes < _numBoards) {
     if (img.empty()) {
-      std::cerr << "The captured image is empty!" << std::endl;
+      std::cerr << "End of image stream!" << std::endl;
       cv::destroyWindow(winname);
       return false;
     }
@@ -122,11 +122,11 @@ int Calibrate::save_chessboard(cv::VideoCapture &cap, int delay,
   }
   cv::destroyWindow(winname);
 
-  write_to_file(object_filename, object_points);
-  std::cout << "Saved object points to " << object_filename << std::endl;
+  write_to_file(_object_filename, object_points);
+  std::cout << "Saved object points to " << _object_filename << std::endl;
 
-  write_to_file(image_filename, image_points);
-  std::cout << "Saved image points to " << image_filename << std::endl;
+  write_to_file(_image_filename, image_points);
+  std::cout << "Saved image points to " << _image_filename << std::endl;
 
   return successes;
 }
@@ -135,26 +135,26 @@ bool Calibrate::load_chessboard(
     std::vector<std::vector<cv::Point3f>> &object_points,
     std::vector<std::vector<cv::Point2f>> &image_points) const {
   // set the size of object_points and image_points
-  int numSquares = numCornersHor * numCornersVer;
-  object_points.resize(numBoards);
+  int numSquares = _numCornersHor * _numCornersVer;
+  object_points.resize(_numBoards);
   for (size_t i = 0; i < object_points.size(); i++)
     object_points[i].resize(numSquares);
-  image_points.resize(numBoards);
+  image_points.resize(_numBoards);
   for (size_t i = 0; i < image_points.size(); i++)
     image_points[i].resize(numSquares);
 
   bool res = false;
 
   // load parameters for object_points
-  std::ifstream obj_ifs(object_filename);
+  std::ifstream obj_ifs(_object_filename);
   if (!obj_ifs.is_open()) {
-    std::cerr << "Could not open " << object_filename << std::endl;
+    std::cerr << "Could not open " << _object_filename << std::endl;
     return false;
   }
   for (size_t i = 0; i < object_points.size(); i++) {
     for (size_t j = 0; j < object_points[i].size(); j++) {
       cv::Point3f &p = object_points[i][j];
-      obj_ifs >> p; // overloaded in general.cpp
+      obj_ifs >> p; // overloaded in general.hpp
       if (!res && p != cv::Point3f())
         res = true;
       CHECK(obj_ifs.good());
@@ -169,15 +169,15 @@ bool Calibrate::load_chessboard(
   res = false;
 
   // load parameters for image_points
-  std::ifstream img_ifs(image_filename);
+  std::ifstream img_ifs(_image_filename);
   if (!img_ifs.is_open()) {
-    std::cerr << "Could not open " << image_filename << std::endl;
+    std::cerr << "Could not open " << _image_filename << std::endl;
     return false;
   }
   for (size_t i = 0; i < image_points.size(); i++) {
     for (size_t j = 0; j < image_points[i].size(); j++) {
       cv::Point2f &p = image_points[i][j];
-      img_ifs >> p; // overloaded in general.cpp
+      img_ifs >> p; // overloaded in general.hpp
       if (!res && p != cv::Point2f())
         res = true;
     }
@@ -201,14 +201,10 @@ void Calibrate::calibrate_camera(
                       distCoeffs, rvecs, tvecs);
   std::cout << "Calibration done!" << std::endl;
 
-  for (int i = 0; i < cameraMatrix.rows; i++) {
-    for (int j = 0; j < cameraMatrix.cols; j++)
-      std::cout << cameraMatrix.at<float>(i, j) << "\t";
-    std::cout << "\n";
-  }
+  DEBUG(cameraMatrix);
 }
 
-void Calibrate::display_undistorted(cv::Mat &img, std::string winname) {
+void Calibrate::display_undistorted(cv::Mat &img, std::string winname) const {
   CHECK(!img.empty());
   bool show_once = winname.empty();
   if (show_once)
@@ -223,8 +219,8 @@ void Calibrate::display_undistorted(cv::Mat &img, std::string winname) {
   }
 }
 
-void Calibrate::display_undistorted(cv::VideoCapture &cap,
-                                    std::string winname) {
+void Calibrate::display_undistorted_all(cv::VideoCapture &cap, int delay,
+                                        std::string winname) const {
   // make sure image stream is open
   CHECK(cap.isOpened());
   cv::Mat img;
@@ -243,7 +239,7 @@ void Calibrate::display_undistorted(cv::VideoCapture &cap,
       break;
     }
     display_undistorted(img, winname);
-    ch = cv::waitKey();
+    ch = cv::waitKey(delay);
     cap >> img;
   }
   cv::destroyWindow(winname);

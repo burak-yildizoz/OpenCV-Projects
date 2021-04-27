@@ -13,8 +13,7 @@
 #include "Fisheye.hpp"
 
 Fisheye::Fisheye(int numBoards, int numCornersHor, int numCornersVer,
-                 const std::string &object_filename,
-                 const std::string &image_filename)
+                 std::string object_filename, std::string image_filename)
     : Calibrate(numBoards, numCornersHor, numCornersVer, object_filename,
                 image_filename) {}
 
@@ -37,7 +36,7 @@ void Fisheye::calibrate_camera(
   DEBUG(cameraMatrix);
 }
 
-void Fisheye::display_undistorted(cv::Mat &img, std::string winname) {
+void Fisheye::display_undistorted(cv::Mat &img, std::string winname) const {
   CHECK(!img.empty());
   bool show_once = winname.empty();
   if (show_once)
@@ -56,29 +55,4 @@ void Fisheye::display_undistorted(cv::Mat &img, std::string winname) {
     CHECK(ch != 27);
     img = imageUndistorted.clone();
   }
-}
-
-void Fisheye::display_undistorted(cv::VideoCapture &cap, std::string winname) {
-  // make sure image stream is open
-  CHECK(cap.isOpened());
-  cv::Mat img;
-  cap >> img;
-  CHECK(!img.empty());
-  CHECK(!winname.empty());
-
-  // for display purposes
-  cv::namedWindow(winname);
-
-  char ch = 0;
-  while (ch != 27) // ESC is pressed
-  {
-    if (img.empty()) {
-      std::cout << "End of image stream!" << std::endl;
-      break;
-    }
-    display_undistorted(img, winname);
-    ch = cv::waitKey();
-    cap >> img;
-  }
-  cv::destroyWindow(winname);
 }

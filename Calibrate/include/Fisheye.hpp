@@ -17,9 +17,9 @@ public:
      be saved & loaded
       @note The parameters specified here cannot be altered later
       */
-  explicit Fisheye(int numBoards, int numCornersHor = 9, int numCornersVer = 6,
-                   const std::string &object_filename = "object_points.txt",
-                   const std::string &image_filename = "image_points.txt");
+  Fisheye(int numBoards, int numCornersHor = 9, int numCornersVer = 6,
+          std::string object_filename = "object_points.txt",
+          std::string image_filename = "image_points.txt");
 
   /** @brief Calibrate fisheye camera
       @param object_points The physical position of the corners (in 3D space)
@@ -32,7 +32,7 @@ public:
   void
   calibrate_camera(const std::vector<std::vector<cv::Point3f>> &objectPoints,
                    const std::vector<std::vector<cv::Point2f>> &imagePoints,
-                   cv::Size imageSize);
+                   cv::Size imageSize) override;
 
   /** @brief Given camera calibration parameters, undistorts the image and
      displays the result
@@ -44,15 +44,8 @@ public:
      resulting image. Else, waitKey needs to be called
       @note Do not specify *winname* to wait until user presses a key
       */
-  void display_undistorted(cv::Mat &img, std::string winname = "");
-
-  /** @brief This is an overloaded function, provided for convenience. It
-     differs from the above function only in what argument(s) it accepts.
-      @param cap The image stream that will be undistorted. It must be opened.
-      @param winname Name of the window that the result will be displayed.
-      */
-  void display_undistorted(cv::VideoCapture &cap,
-                           std::string winname = "undistorted");
+  void display_undistorted(cv::Mat &img,
+                           std::string winname = "") const override;
 };
 
 #endif // FISHEYE_HPP

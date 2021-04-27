@@ -8,7 +8,7 @@ int main(int argc, char *argv[]) {
   // example: samples/data/left%02d.jpg
   const char *img_stream = (argc > 2) ? argv[2] : "../data/fisheye/left%2d.jpg";
   // display results on test data
-  const char *res_stream = (argc > 3) ? argv[3] : "0";
+  const char *res_stream = (argc > 3) ? argv[3] : img_stream;
 
   Fisheye cal(num_imgs);
 
@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
     setCap(img_stream);
   CHECK(cap.isOpened());
 
-  cal.display_undistorted(cap);
+  cal.display_undistorted_all(cap, delay);
 
   return 0;
 }

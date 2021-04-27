@@ -8,11 +8,12 @@
 #include <vector>
 
 class Calibrate {
-  int _numBoards;
-  int _numCornersHor;
-  int _numCornersVer;
-  std::string _object_filename;
-  std::string _image_filename;
+  int _numBoards; // number of chessboard images to be calibrated
+  // if the chessboard is 8x8, then both number of corners should be 7
+  int _numCornersHor;           // number of corners along width
+  int _numCornersVer;           // number of corners along height
+  std::string _object_filename; // external filename for object points
+  std::string _image_filename;  // external filename for image points
 
 protected:
   // helper function for *save_chessboard*
@@ -23,15 +24,6 @@ protected:
   cv::Mat distCoeffs;
 
 public:
-  const int &numBoards =
-      _numBoards; // number of chessboard images to be calibrated
-  // if the chessboard is 8x8, then both number of corners should be 7
-  const int &numCornersHor = _numCornersHor; // number of corners along width
-  const int &numCornersVer = _numCornersVer; // number of corners along height
-  const std::string &object_filename =
-      _object_filename; // external filename for object points
-  const std::string &image_filename =
-      _image_filename; // external filename for image points
   /** @brief Class for camera calibration
       @param numBoards number of chessboard images to be calibrated
       @param numCornersHor number of corners along width
@@ -42,10 +34,9 @@ public:
      be saved & loaded
       @note The parameters specified here cannot be altered later
       */
-  explicit Calibrate(int numBoards, int numCornersHor = 9,
-                     int numCornersVer = 6,
-                     const std::string &object_filename = "object_points.txt",
-                     const std::string &image_filename = "image_points.txt");
+  Calibrate(int numBoards, int numCornersHor = 9, int numCornersVer = 6,
+            std::string object_filename = "object_points.txt",
+            std::string image_filename = "image_points.txt");
 
   /** @brief Saves the chessboard properties to external files from given image
      stream Press space key to save the chessboard properties Press S to save
@@ -81,7 +72,7 @@ public:
      empty matrix is converted to have fx=fy=1
       @param distCoeffs Distortion coefficients
       */
-  void
+  virtual void
   calibrate_camera(const std::vector<std::vector<cv::Point3f>> &objectPoints,
                    const std::vector<std::vector<cv::Point2f>> &imagePoints,
                    cv::Size imageSize);
@@ -96,15 +87,18 @@ public:
      resulting image. Else, waitKey needs to be called
       @note Do not specify *winname* to wait until user presses a key
       */
-  void display_undistorted(cv::Mat &img, std::string winname = "");
+  virtual void display_undistorted(cv::Mat &img,
+                                   std::string winname = "") const;
 
-  /** @brief This is an overloaded function, provided for convenience. It
-     differs from the above function only in what argument(s) it accepts.
+  /** @brief Given camera calibration parameters, undistorts the images and
+     displays the result
       @param cap The image stream that will be undistorted. It must be opened.
+      @param delay Wait time in ms between frames. 0 means wait until a
+     keystroke.
       @param winname Name of the window that the result will be displayed.
       */
-  void display_undistorted(cv::VideoCapture &cap,
-                           std::string winname = "undistorted");
+  void display_undistorted_all(cv::VideoCapture &cap, int delay = 1,
+                               std::string winname = "undistorted") const;
 };
 
 #endif // CALIBRATE_HPP
