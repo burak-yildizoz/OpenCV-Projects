@@ -1,16 +1,8 @@
 #ifndef STITCH_HPP
 #define STITCH_HPP
 
-#include <opencv2/core.hpp>
-#ifdef HAVE_OPENCV_XFEATURES2D
-#include <opencv2/xfeatures2d.hpp>
-#else
-#include "general.hpp"
-STATIC_WARNING(false, "OpenCV xfeatures2d is not available. Using ORB features."
-                      " There may occur incorrect results more than expected.");
-#include <opencv2/features2d.hpp>
-#endif
 #include <functional>
+#include <opencv2/features2d.hpp>
 #include <utility>
 #include <vector>
 
@@ -58,13 +50,9 @@ class Stitcher {
 
 public:
   // detect and extract features from the image
-#ifdef HAVE_OPENCV_XFEATURES2D
-  static const cv::Ptr<cv::xfeatures2d::SIFT> descriptor;
-#else
-  static const cv::Ptr<cv::ORB> descriptor;
-#endif
+  static const cv::Ptr<cv::Feature2D> descriptor;
   // compute the raw matches
-  static const cv::Ptr<cv::FlannBasedMatcher> matcher;
+  static const cv::Ptr<cv::DescriptorMatcher> matcher;
 
   // returns IDs of matched features given descriptors
   // {trainIds, queryIds}

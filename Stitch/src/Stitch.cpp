@@ -299,17 +299,9 @@ cv::Mat Stitcher::combineImages(const cv::Mat &localMap,
   return finalPano.pano();
 }
 
-#ifdef HAVE_OPENCV_XFEATURES2D
-const cv::Ptr<cv::xfeatures2d::SIFT> Stitcher::descriptor =
-    cv::xfeatures2d::SIFT::create();
-const cv::Ptr<cv::FlannBasedMatcher> Stitcher::matcher =
-    cv::FlannBasedMatcher::create();
-#else
-const cv::Ptr<cv::ORB> Stitcher::descriptor = cv::ORB::create();
-const cv::Ptr<cv::FlannBasedMatcher> Stitcher::matcher =
-    cv::makePtr<cv::FlannBasedMatcher>(cv::FlannBasedMatcher(
-        cv::makePtr<cv::flann::LshIndexParams>(12, 20, 2)));
-#endif
+const cv::Ptr<cv::Feature2D> Stitcher::descriptor = cv::SIFT::create();
+const cv::Ptr<cv::DescriptorMatcher> Stitcher::matcher =
+    cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
 
 Stitcher::Stitcher(const cv::Mat &img)
     : _imgs(std::vector<cv::Mat>(1, img.clone())) {
