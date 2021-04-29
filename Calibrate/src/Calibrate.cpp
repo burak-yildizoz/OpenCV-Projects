@@ -6,9 +6,9 @@
 // standard library
 #include <fstream>
 // handy tools such as DEBUG, CHECK, etc.
-#include "general.hpp"
+#include "Calibrate/general.hpp"
 // header file
-#include "Calibrate.hpp"
+#include "Calibrate/Calibrate.hpp"
 
 template <class T>
 void Calibrate::write_to_file(std::string filename,

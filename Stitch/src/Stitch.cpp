@@ -1,9 +1,9 @@
 #include <opencv2/calib3d.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include "Stitch.hpp"
-#include "general.hpp"
-#include "imgops.hpp"
+#include <Stitch/Stitch.hpp>
+#include <Stitch/general.hpp>
+#include <Stitch/imgops.hpp>
 
 Feature::Feature(const cv::Mat &gray) {
   CHECK(gray.dims == 2);

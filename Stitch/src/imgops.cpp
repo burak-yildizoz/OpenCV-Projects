@@ -1,8 +1,8 @@
 #include <numeric>
 #include <string>
 
-#include "general.hpp"
-#include "imgops.hpp"
+#include <Stitch/general.hpp>
+#include <Stitch/imgops.hpp>
 
 namespace imgops {
 cv::Mat resize(const cv::Mat &img, int width) {

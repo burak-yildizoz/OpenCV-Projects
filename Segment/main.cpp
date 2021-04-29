@@ -8,10 +8,10 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include "Segmenter.hpp" // graph-based segmentation
-#include "Stitch.hpp"    // feature matching
-#include "general.hpp"   // handy tools such as check, debug, etc.
-#include "imgops.hpp"    // image operations such as blend, rgb2gray, etc.
+#include "Segment/Segmenter.hpp" // graph-based segmentation
+#include <Stitch/Stitch.hpp>     // feature matching
+#include <Stitch/general.hpp>    // handy tools such as check, debug, etc.
+#include <Stitch/imgops.hpp> // image operations such as blend, rgb2gray, etc.
 
 #include <cstdlib>
 

@@ -4,9 +4,9 @@
 #include <iostream>
 #include <string>
 
-#include "Stitch.hpp"
-#include "general.hpp"
-#include "imgops.hpp"
+#include <Stitch/Stitch.hpp>
+#include <Stitch/general.hpp>
+#include <Stitch/imgops.hpp>
 
 int main(int argc, char *argv[]) {
   const std::string prepath = (argc > 1) ? argv[1] : "jungle/";

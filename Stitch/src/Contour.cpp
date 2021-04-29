@@ -1,4 +1,4 @@
-#include "Contour.hpp"
+#include <Stitch/Contour.hpp>
 #include <cmath>
 #include <opencv2/imgproc.hpp>
 

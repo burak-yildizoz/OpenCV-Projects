@@ -8,9 +8,9 @@
 #include <string>
 #include <vector>
 // handy tools such as DEBUG, CHECK, etc.
-#include "general.hpp"
+#include "Calibrate/general.hpp"
 // header file
-#include "Fisheye.hpp"
+#include "Calibrate/Fisheye.hpp"
 
 Fisheye::Fisheye(int numBoards, int numCornersHor, int numCornersVer,
                  std::string object_filename, std::string image_filename)
