@@ -2,10 +2,12 @@
 #define GENERAL_HPP
 
 #include <csignal>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <map>
-#include <opencv2/core.hpp>
+#include <opencv2/videoio.hpp>
+#include <regex>
 #include <vector>
 
 #define DEBUG(cc)                                                              \
@@ -112,6 +114,18 @@ std::pair<typename T::value_type, int> most_frequent_element(T const &v) {
     }
   }
   return std::make_pair(mostFrequentElement, maxFrequency);
+}
+
+inline bool videocapture_open(cv::VideoCapture &cap, const std::string &input) {
+  std::regex img_seq(R"(%\d*d)"); // e.g. "%d" or "%01d"
+  std::regex url(R"(:\/\/)");     // "://"
+  if (input.size() == 1)
+    cap.open(atoi(input.c_str()));
+  else if (std::regex_search(input, img_seq) || std::regex_search(input, url))
+    cap.open(input);
+  else
+    cap.open(cv::samples::findFile(input));
+  return cap.isOpened();
 }
 } // namespace general
 

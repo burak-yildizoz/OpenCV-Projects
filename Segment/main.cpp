@@ -16,18 +16,13 @@
 #include <cstdlib>
 
 int main(int argc, char **argv) {
-  const std::string path = (argc > 1) ? argv[1] : "../dataset/car/%04d.jpg";
-  const int cam_id = atoi(path.c_str());
+  const std::string input = (argc > 1) ? argv[1] : "vtest.avi";
 
   // create a colormap for displaying purposes
   std::vector<cv::Vec3b> rainbow = imgops::colormap(cv::COLORMAP_RAINBOW, true);
 
   cv::VideoCapture cap;
-  if (cam_id || path == "0")
-    cap.open(cam_id);
-  else
-    cap.open(path);
-  CHECK(cap.isOpened());
+  CHECK(general::videocapture_open(cap, input));
   cv::Mat img;
   bool paused = false;
 

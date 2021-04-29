@@ -29,8 +29,10 @@ int main(int argc, char *argv[]) {
 
   // create a map where visited points are true
   // the default is a test local map for images obtained by PictureByParts
-  cv::Mat local_map = (cv::Mat_<uchar>(3, 6) << 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1,
-                       0, 1, 1, 1, 1, 0, 0) *
+  cv::Mat local_map = (cv::Mat_<uchar>(3, 6) << ((0, 0, 1, 1, 1, 1), //
+                                                 (0, 1, 1, 1, 1, 0), //
+                                                 (1, 1, 1, 1, 0, 0)) //
+                       ) *
                       255;
   if (!matpath.empty())
     local_map = general::matread(matpath);
