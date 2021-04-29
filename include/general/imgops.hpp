@@ -2,17 +2,55 @@
 #define IMGOPS_HPP
 
 #include <opencv2/imgproc.hpp>
+#include <opencv2/video.hpp>
 
 #include <vector>
 
 #include <general/Contour.hpp>
 
 namespace imgops {
-// resize with constant ratio
-cv::Mat resize(const cv::Mat &img, int width);
 
-// convert from RGB to grayscale
-cv::Mat rgb2gray(const cv::Mat &img);
+// resize with constant ratio
+inline cv::Mat resize(const cv::Mat &img, int width) {
+  cv::Mat resized;
+  cv::Size dsize(width, img.rows * width / img.cols);
+  cv::resize(img, resized, dsize);
+  return resized;
+}
+
+// convert color image to grayscale
+inline cv::Mat bgr2gray(const cv::Mat &img) {
+  cv::Mat gray;
+  cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
+  return gray;
+}
+
+// convert from grayscale to color image
+inline cv::Mat gray2bgr(const cv::Mat &gray) {
+  cv::Mat img;
+  cv::cvtColor(gray, img, cv::COLOR_GRAY2BGR);
+  return img;
+}
+
+// convert to HSV color space
+inline cv::Mat bgr2hsv(const cv::Mat &img) {
+  cv::Mat hsv;
+  cv::cvtColor(img, hsv, cv::COLOR_BGR2HSV);
+  return hsv;
+}
+
+// convert from HSV color space
+inline cv::Mat hsv2bgr(const cv::Mat &hsv) {
+  cv::Mat img;
+  cv::cvtColor(hsv, img, cv::COLOR_HSV2BGR);
+  return img;
+}
+
+// obtain transparent image
+// tr is between 0-1, 0 gives m1
+inline cv::Mat blend(const cv::Mat &m1, const cv::Mat &m2, double tr = 0.5) {
+  return m1 * (1 - tr) + m2 * tr;
+}
 
 // ROI without the black borders
 cv::Rect cropBorder(const cv::Mat &img);
@@ -21,12 +59,26 @@ cv::Rect cropBorder(const cv::Mat &img);
 // return the corresponding point of the old origin
 cv::Point addBorder(cv::Mat &img, cv::Rect rect);
 
-// obtain transparent image
-// tr is between 0-1, 0 gives m1
-cv::Mat blend(const cv::Mat &m1, const cv::Mat &m2, double tr = 0.5);
-
 // falsecolor vector
 std::vector<cv::Vec3b> colormap(cv::ColormapTypes type, bool shuffle = false);
+
+// available optical flow types from *get_optflow*
+std::vector<std::string> get_optflow_types();
+
+// get the optical flow class at given type
+// use *get_optflow_types* to see available types
+// use_rgb: whether *calc* method of the returned class uses color or grayscale
+// image
+cv::Ptr<cv::DenseOpticalFlow> get_optflow(
+    std::string optflowType,
+    bool &use_rgb = const_cast<bool &>(static_cast<const bool &>(false)));
+
+// draw optical flow vector field
+void drawOptFlowMap(const cv::Mat &flow, cv::Mat &flowmap, int step = 16,
+                    cv::Scalar color = CV_RGB(255, 0, 0));
+
+// represent optical flow magnitude and angle in HSV color space
+cv::Mat reprOptFlow(const cv::Mat &flow);
 
 } // namespace imgops
 

@@ -1,13 +1,16 @@
 #ifndef GENERAL_HPP
 #define GENERAL_HPP
 
+#include <algorithm>
 #include <csignal>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <opencv2/videoio.hpp>
 #include <regex>
+#include <stdexcept>
 #include <vector>
 
 #define DEBUG(cc)                                                              \
@@ -27,7 +30,7 @@
 
 // print vector container
 template <class T>
-inline std::ostream &operator<<(std::ostream &os, const std::vector<T> &v) {
+std::ostream &operator<<(std::ostream &os, const std::vector<T> &v) {
   for (size_t i = 0; i < v.size(); i++)
     os << v[i] << " ";
   return os;
@@ -35,8 +38,8 @@ inline std::ostream &operator<<(std::ostream &os, const std::vector<T> &v) {
 
 // print matrix container
 template <class T>
-inline std::ostream &operator<<(std::ostream &os,
-                                const std::vector<std::vector<T>> &M) {
+std::ostream &operator<<(std::ostream &os,
+                         const std::vector<std::vector<T>> &M) {
   for (size_t i = 0; i < M.size(); i++)
     os << M[i] << "\n";
   os << std::endl;
@@ -159,6 +162,28 @@ inline bool videocapture_open(cv::VideoCapture &cap, const std::string &input) {
   else
     cap.open(cv::samples::findFile(input));
   return cap.isOpened();
+}
+
+// format string like printf
+// https://stackoverflow.com/a/26221725/12447766
+template <typename... Args>
+std::string string_format(const std::string &format, Args... args) {
+  int size_s = std::snprintf(nullptr, 0, format.c_str(), args...) +
+               1; // Extra space for '\0'
+  if (size_s <= 0) {
+    throw std::runtime_error("Error during formatting.");
+  }
+  auto size = static_cast<size_t>(size_s);
+  auto buf = std::make_unique<char[]>(size);
+  std::snprintf(buf.get(), size, format.c_str(), args...);
+  return std::string(buf.get(),
+                     buf.get() + size - 1); // We don't want the '\0' inside
+}
+
+inline std::string &toupper(std::string &s) {
+  std::transform(s.begin(), s.end(), s.begin(),
+                 [](unsigned char c) { return std::toupper(c); });
+  return s;
 }
 } // namespace general
 

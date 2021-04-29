@@ -36,6 +36,18 @@ MATLAB file implements encoding and decoding parts described in [wiki/JPEG](http
 C++ file demonstrates the effect of changing the quality factor in real time.
 Huffman coding is used to calculate the compression ratio, but the rest is not implemented.
 
+## optflow
+
+Test dense optical flow algorithms.
+
+<kbd><img src="fig/optflow.jpg"/></kbd>
+
+Latest available optical flow classes: [`cv::DenseOpticalFlow`](https://docs.opencv.org/master/df/dde/classcv_1_1DenseOpticalFlow.html)
+
+- Press <kbd>V</kbd> to toggle optical flow representation.
+- Press <kbd>SPACE</kbd> to toggle pause.
+- Press <kbd>ESC</kbd> to exit.
+
 ## PictureByParts
 
 Split an image into multiple overlapping parts.

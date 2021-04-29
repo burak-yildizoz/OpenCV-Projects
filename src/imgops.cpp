@@ -1,23 +1,13 @@
-#include <numeric>
-#include <string>
-
 #include <general/general.hpp>
 #include <general/imgops.hpp>
+#include <numeric>
+#include <stdexcept>
+#include <string>
+#ifdef HAVE_OPENCV_OPTFLOW
+#include <opencv2/optflow.hpp>
+#endif
 
 namespace imgops {
-cv::Mat resize(const cv::Mat &img, int width) {
-  cv::Mat resized;
-  cv::Size dsize(width, img.rows * width / img.cols);
-  cv::resize(img, resized, dsize);
-  return resized;
-}
-
-cv::Mat rgb2gray(const cv::Mat &img) {
-  cv::Mat gray;
-  cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
-  return gray;
-}
-
 cv::Rect cropBorder(const cv::Mat &img) {
   CHECK(img.type() == CV_8UC3);
 
@@ -52,10 +42,6 @@ cv::Point addBorder(cv::Mat &img, cv::Rect rect) {
   return cv::Point(left, top);
 }
 
-cv::Mat blend(const cv::Mat &m1, const cv::Mat &m2, double tr) {
-  return m1 * (1 - tr) + m2 * tr;
-}
-
 std::vector<cv::Vec3b> colormap(cv::ColormapTypes type, bool shuffle) {
   uchar data[256];
   std::iota(data, data + 256, 0);
@@ -67,6 +53,65 @@ std::vector<cv::Vec3b> colormap(cv::ColormapTypes type, bool shuffle) {
   std::vector<cv::Vec3b> res(falsecolor.begin<cv::Vec3b>(),
                              falsecolor.end<cv::Vec3b>());
   return res;
+}
+
+std::vector<std::string> get_optflow_types() {
+  return {"DIS", "FBACK"
+#ifdef HAVE_OPENCV_OPTFLOW
+          ,
+          "RLOF", "TVL1", "PCA"
+#endif
+  };
+}
+
+// https://docs.opencv.org/master/df/dde/classcv_1_1DenseOpticalFlow.html
+cv::Ptr<cv::DenseOpticalFlow> get_optflow(std::string optflowType,
+                                          bool &use_rgb) {
+  general::toupper(optflowType);
+  use_rgb = false;
+  if (optflowType == "DIS")
+    return cv::DISOpticalFlow::create();
+  if (optflowType == "FBACK")
+    return cv::FarnebackOpticalFlow::create();
+#ifdef HAVE_OPENCV_OPTFLOW
+  if (optflowType == "RLOF") {
+    use_rgb = true;
+    return cv::optflow::DenseRLOFOpticalFlow::create();
+  }
+  if (optflowType == "TVL1")
+    return cv::optflow::DualTVL1OpticalFlow::create();
+  if (optflowType == "PCA")
+    return cv::makePtr<cv::optflow::OpticalFlowPCAFlow>(
+        cv::optflow::OpticalFlowPCAFlow());
+#endif
+  throw std::runtime_error("Unknown optical flow type.");
+}
+
+void drawOptFlowMap(const cv::Mat &flow, cv::Mat &flowmap, int step,
+                    cv::Scalar color) {
+  for (int x = 0; x < flow.cols; x += step) {
+    for (int y = 0; y < flow.rows; y += step) {
+      const cv::Point2f &fxy = flow.at<cv::Point2f>(y, x);
+      cv::line(flowmap, cv::Point(x, y),
+               cv::Point(cvRound(x + fxy.x), cvRound(y + fxy.y)), color);
+      cv::circle(flowmap, cv::Point(x, y), 2, color, cv::FILLED);
+    }
+  }
+}
+
+cv::Mat reprOptFlow(const cv::Mat &flow) {
+  std::vector<cv::Mat> grad;
+  cv::split(flow, grad);
+  cv::Mat magnitude, angle;
+  bool angleInDegrees = true;
+  cv::cartToPolar(grad[0], grad[1], magnitude, angle, angleInDegrees);
+  cv::normalize(magnitude, magnitude, 0, 255, cv::NORM_MINMAX, CV_8U);
+  angle.convertTo(angle, CV_8U, 0.5);
+  std::vector<cv::Mat> hsv_vec = {
+      angle, 255 * cv::Mat::ones(flow.size(), CV_8U), magnitude};
+  cv::Mat hsv;
+  cv::merge(hsv_vec, hsv);
+  return hsv2bgr(hsv);
 }
 } // namespace imgops
 
