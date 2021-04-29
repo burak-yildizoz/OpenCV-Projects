@@ -3,9 +3,9 @@
 #include <algorithm>
 
 #include "Segment/Segmenter.hpp"
-#include <Stitch/general.hpp>
 #include <egbis.h> // Efficient Graph-Based Image Segmentation algorithm
 #include <egbis/segment-image.h> // universe, segmentation
+#include <general/general.hpp>
 
 Segmenter::Segmenter(const cv::Mat &img, float sigma, float k, int min_size)
     : _sigma(sigma), _k(k), _min_size(min_size),

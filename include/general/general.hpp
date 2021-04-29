@@ -58,6 +58,39 @@ inline std::ostream &operator<<(std::ostream &os, const cv::DMatch &d) {
   return os;
 }
 
+namespace {
+// read until *ch* comes
+inline void _read(std::ifstream &is, const char ch) {
+  char _ch = 0;
+  while (is.good() && ch != _ch)
+    is >> _ch;
+}
+} // namespace
+
+// read Point3
+template <typename _Tp>
+std::ifstream &operator>>(std::ifstream &is, cv::Point3_<_Tp> &v) {
+  _read(is, '[');
+  is >> v.x;
+  _read(is, ',');
+  is >> v.y;
+  _read(is, ',');
+  is >> v.z;
+  _read(is, ']');
+  return is;
+}
+
+// read Point
+template <typename _Tp>
+std::ifstream &operator>>(std::ifstream &is, cv::Point_<_Tp> &v) {
+  _read(is, '[');
+  is >> v.x;
+  _read(is, ',');
+  is >> v.y;
+  _read(is, ']');
+  return is;
+}
+
 namespace general {
 inline void matwrite(const std::string &filename, const cv::Mat &mat) {
   std::ofstream fs(filename, std::fstream::binary);

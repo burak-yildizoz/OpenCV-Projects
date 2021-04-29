@@ -6,7 +6,7 @@
 // standard library
 #include <fstream>
 // handy tools such as DEBUG, CHECK, etc.
-#include "Calibrate/general.hpp"
+#include <general/general.hpp>
 // header file
 #include "Calibrate/Calibrate.hpp"
 

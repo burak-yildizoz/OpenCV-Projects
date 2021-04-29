@@ -6,8 +6,8 @@
 #include <string>
 
 #include <Stitch/Stitch.hpp>
-#include <Stitch/general.hpp>
-#include <Stitch/imgops.hpp>
+#include <general/general.hpp>
+#include <general/imgops.hpp>
 
 int main(int argc, char *argv[]) {
   const std::string prepath = (argc > 1) ? argv[1] : "frame_";

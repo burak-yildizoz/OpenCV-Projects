@@ -2,7 +2,7 @@
 
 Computer vision programs written in C++.
 
-All projects have a cross-platform `CMakeLists.txt`, all of which include `CMake_OpenCV.txt` at the root folder.
+All projects have a cross-platform `CMakeLists.txt`, all of which add `CMakeLists.txt` at the root folder as subdirectory to find OpenCV and to share common code in one place.
 
 - [Calibrate](#Calibrate)
 - [Jpeg](#Jpeg)

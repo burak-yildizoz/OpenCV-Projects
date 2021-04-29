@@ -1,7 +1,7 @@
 #include "Calibrate/Calibrate.hpp"
-#include "Calibrate/general.hpp"
 #include <cstdlib>
 #include <cstring>
+#include <general/general.hpp>
 
 int main(int argc, char *argv[]) {
   // number of chessboard images

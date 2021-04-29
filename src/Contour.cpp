@@ -1,5 +1,5 @@
-#include <Stitch/Contour.hpp>
 #include <cmath>
+#include <general/Contour.hpp>
 #include <opencv2/imgproc.hpp>
 
 Contour::Contour(std::vector<cv::Point> contourPoints)

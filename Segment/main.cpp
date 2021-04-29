@@ -10,8 +10,8 @@
 
 #include "Segment/Segmenter.hpp" // graph-based segmentation
 #include <Stitch/Stitch.hpp>     // feature matching
-#include <Stitch/general.hpp>    // handy tools such as check, debug, etc.
-#include <Stitch/imgops.hpp> // image operations such as blend, rgb2gray, etc.
+#include <general/general.hpp>   // handy tools such as check, debug, etc.
+#include <general/imgops.hpp> // image operations such as blend, rgb2gray, etc.
 
 #include <cstdlib>
 

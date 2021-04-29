@@ -5,7 +5,7 @@
 
 #include <vector>
 
-#include <Stitch/Contour.hpp>
+#include <general/Contour.hpp>
 
 class Segmenter {
   int _num_ccs;
