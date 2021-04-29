@@ -6,8 +6,13 @@
 #ifdef HAVE_OPENCV_OPTFLOW
 #include <opencv2/optflow.hpp>
 #endif
+#ifdef HAVE_OPENCV_TRACKING
+#include <opencv2/tracking.hpp>
+#include <opencv2/tracking/tracking_legacy.hpp>
+#endif
 
 namespace imgops {
+
 cv::Rect cropBorder(const cv::Mat &img) {
   CHECK(img.type() == CV_8UC3);
 
@@ -113,6 +118,48 @@ cv::Mat reprOptFlow(const cv::Mat &flow) {
   cv::merge(hsv_vec, hsv);
   return hsv2bgr(hsv);
 }
+
+std::vector<std::string> get_tracker_types() {
+  return {"MIL",
+          "GOTURN"
+#ifdef HAVE_OPENCV_TRACKING
+          ,
+          "CSRT",
+          "KCF",
+          "BOOSTING",
+          "MEDIANFLOW",
+          "TLD",
+          "MOSSE"
+#endif
+  };
+}
+
+// https://github.com/opencv/opencv_contrib/blob/master/modules/tracking/samples/samples_utility.hpp
+cv::Ptr<cv::Tracker> get_tracker(std::string trackerType) {
+  general::toupper(trackerType);
+  if (trackerType == "MIL")
+    return cv::TrackerMIL::create();
+  if (trackerType == "GOTURN")
+    return cv::TrackerGOTURN::create();
+#ifdef HAVE_OPENCV_TRACKING
+  if (trackerType == "CSRT")
+    return cv::TrackerCSRT::create();
+  if (trackerType == "KCF")
+    return cv::TrackerKCF::create();
+  if (trackerType == "BOOSTING")
+    return cv::legacy::upgradeTrackingAPI(
+        cv::legacy::TrackerBoosting::create());
+  if (trackerType == "MEDIANFLOW")
+    return cv::legacy::upgradeTrackingAPI(
+        cv::legacy::TrackerMedianFlow::create());
+  if (trackerType == "TLD")
+    return cv::legacy::upgradeTrackingAPI(cv::legacy::TrackerTLD::create());
+  if (trackerType == "MOSSE")
+    return cv::legacy::upgradeTrackingAPI(cv::legacy::TrackerMOSSE::create());
+#endif
+  throw std::runtime_error("Unknown tracker type.");
+}
+
 } // namespace imgops
 
 ConnectImages::ConnectImages(cv::Rect prevRect, cv::Rect nextRect)

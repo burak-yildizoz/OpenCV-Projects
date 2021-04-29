@@ -80,6 +80,13 @@ void drawOptFlowMap(const cv::Mat &flow, cv::Mat &flowmap, int step = 16,
 // represent optical flow magnitude and angle in HSV color space
 cv::Mat reprOptFlow(const cv::Mat &flow);
 
+// available tracker types from *get_tracker*
+std::vector<std::string> get_tracker_types();
+
+// get the tracker class at given type
+// use *get_tracker_types* to see available types
+cv::Ptr<cv::Tracker> get_tracker(std::string trackerType);
+
 } // namespace imgops
 
 class ConnectImages {

@@ -47,3 +47,11 @@ endif(WIN32)
 
 target_link_libraries(general_library ${OpenCV_LIBS})
 target_include_directories(general_library PUBLIC "include")
+
+include_directories("include")
+
+add_executable(optflow src/optflow.cpp)
+target_link_libraries(optflow general_library)
+
+add_executable(tracker src/tracker.cpp)
+target_link_libraries(tracker general_library)

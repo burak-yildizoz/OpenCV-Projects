@@ -38,13 +38,15 @@ int main(int argc, char **argv) {
       std::cout << "End of image stream!" << std::endl;
       break;
     }
-    // calculate dense optical flow
+    // measure runtime of dense optical flow
+    double timer = static_cast<double>(cv::getTickCount());
     cv::Mat flow;
     if (use_rgb)
       optflow->calc(last_img, img, flow);
     else
       optflow->calc(imgops::bgr2gray(last_img), imgops::bgr2gray(img), flow);
-    // display the results
+    double fps = cv::getTickFrequency() / (cv::getTickCount() - timer);
+    // display the result
     cv::Mat disp_img;
     if (show_vectors) {
       disp_img = img.clone();
@@ -52,6 +54,13 @@ int main(int argc, char **argv) {
     } else {
       disp_img = imgops::reprOptFlow(flow);
     }
+    // display frame rate
+    double scale = 0.75;
+    cv::Scalar disp_color = CV_RGB(0, 255, 255);
+    int thickness = 2;
+    std::string fps_str = general::string_format("FPS: %.f", fps);
+    cv::putText(disp_img, fps_str, cv::Point(100, 50), cv::FONT_HERSHEY_SIMPLEX,
+                scale, disp_color, thickness);
     cv::imshow(winname, disp_img);
     char ch = cv::waitKey(paused ? 0 : 1);
     if (ch == 27) // press ESC to exit
