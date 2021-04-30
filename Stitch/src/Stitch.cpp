@@ -147,7 +147,7 @@ Stitcher::patchPano(const std::pair<cv::Mat, cv::Point> &prevPano,
   cv::Point shift = imgops::addBorder(pano, bb);
   cv::Point orig = prevOrig + shift;
   nextImg.copyTo(pano(cv::Rect(orig - nextOrig, nextImg.size())),
-                 imgops::rgb2gray(nextImg));
+                 imgops::bgr2gray(nextImg));
   return std::make_pair(pano, orig);
 }
 
@@ -306,7 +306,7 @@ const cv::Ptr<cv::DescriptorMatcher> Stitcher::matcher =
 Stitcher::Stitcher(const cv::Mat &img)
     : _imgs(std::vector<cv::Mat>(1, img.clone())) {
   // convert to grayscale
-  cv::Mat gray = imgops::rgb2gray(img);
+  cv::Mat gray = imgops::bgr2gray(img);
   // detect keypoints and extract local invariant descriptors from them
   Feature feature(gray);
 
@@ -323,8 +323,8 @@ Stitcher::Stitcher(const cv::Mat &img, const cv::Mat &lastPano,
   _imgs[1] = img.clone();
 
   // find features
-  Feature prevFeature(imgops::rgb2gray(prevImg));
-  Feature feature(imgops::rgb2gray(img));
+  Feature prevFeature(imgops::bgr2gray(prevImg));
+  Feature feature(imgops::bgr2gray(img));
   _features.push_back(prevFeature);
   _features.push_back(feature);
 
@@ -367,12 +367,12 @@ Stitcher::Stitcher(const Stitcher &prevStitcher, const Stitcher &nextStitcher) {
   // save the results
   _imgs.push_back(img);
   _lastPano = pano;
-  _features.push_back(Feature(imgops::rgb2gray(img)));
+  _features.push_back(Feature(imgops::bgr2gray(img)));
 }
 
 void Stitcher::add(const cv::Mat &img) {
   // convert to grayscale
-  cv::Mat gray = imgops::rgb2gray(img);
+  cv::Mat gray = imgops::bgr2gray(img);
   // detect keypoints and extract local invariant descriptors from them
   Feature feature(gray);
 

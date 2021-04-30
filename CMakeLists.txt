@@ -28,7 +28,7 @@ macro(find_opencv)
     endforeach()
   endif(WIN32 AND NOT BUILD_SHARED_LIBS)
 
-  set(CMAKE_CXX_STANDARD 11)
+  set(CMAKE_CXX_STANDARD 14)
   if(NOT WIN32)
     add_compile_options(-Wall -Wextra -Wpedantic)
     add_compile_options(-pthread)
@@ -47,6 +47,17 @@ endif(WIN32)
 
 target_link_libraries(general_library ${OpenCV_LIBS})
 target_include_directories(general_library PUBLIC "include")
+
+option(BUILD_SUBDIRECTORIES "Build all projects" OFF)
+message(STATUS "Build subdirectories: " ${BUILD_SUBDIRECTORIES})
+if(BUILD_SUBDIRECTORIES)
+  if(NOT TARGET stitch_library)
+    add_subdirectory(Stitch)
+  endif(NOT TARGET stitch_library)
+  add_subdirectory(Calibrate)
+  add_subdirectory(Jpeg)
+  add_subdirectory(Segment)
+endif(BUILD_SUBDIRECTORIES)
 
 include_directories("include")
 

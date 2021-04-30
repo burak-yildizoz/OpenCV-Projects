@@ -17,9 +17,15 @@ For contributing, please use [`git-clang-format`](https://reviews.llvm.org/sourc
 
     $ git clang-format *
 
+or
+
+    $ sudo apt-get install git-clang-format
+    $ git-clang-format-<ver> *
+
 Consider adding it as a pre-commit hook as described in [githook-clang-format](https://github.com/andrewseidl/githook-clang-format).
 
     $ mv clang-format.hook .git/hooks/pre-commit
+    $ chmod +x .git/hooks/pre-commit
 
 ---
 

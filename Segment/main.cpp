@@ -11,7 +11,7 @@
 #include "Segment/Segmenter.hpp" // graph-based segmentation
 #include <Stitch/Stitch.hpp>     // feature matching
 #include <general/general.hpp>   // handy tools such as check, debug, etc.
-#include <general/imgops.hpp> // image operations such as blend, rgb2gray, etc.
+#include <general/imgops.hpp> // image operations such as blend, bgr2gray, etc.
 
 #include <cstdlib>
 
@@ -40,11 +40,11 @@ int main(int argc, char **argv) {
     DEBUG(segment.numSegments);
 
     // detect features in the image
-    Feature feature(imgops::rgb2gray(img));
+    Feature feature(imgops::bgr2gray(img));
 
     // match the features between frames
     static cv::Mat lastImg = img;
-    Feature lastFeature(imgops::rgb2gray(lastImg));
+    Feature lastFeature(imgops::bgr2gray(lastImg));
     std::pair<std::vector<int>, std::vector<int>> matches =
         Stitcher::findMatch(lastFeature.desc, feature.desc);
     std::vector<bool> status =
