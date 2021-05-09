@@ -24,6 +24,37 @@ void Calibrate::write_to_file(std::string filename, const std::vector<std::vecto
     ofs.close();
 }
 
+// Calculates rotation matrix given euler angles.
+cv::Mat eulerAnglesToRotationMatrix(cv::Vec3f &theta)
+{
+    // Calculate rotation about roll.
+    cv::Mat R_x = (cv::Mat_<double>(3,3) <<
+               1,       0,              0,
+               0,       cos(theta[0]),   -sin(theta[0]),
+               0,       sin(theta[0]),   cos(theta[0])
+               );
+    
+    // Calculate rotation about pitch.
+    cv::Mat R_y = (cv::Mat_<double>(3,3) <<
+               cos(theta[1]),    0,      sin(theta[1]),
+               0,               1,      0,
+               -sin(theta[1]),   0,      cos(theta[1])
+               );
+    
+    // Calculate rotation about yaw.
+    cv::Mat R_z = (cv::Mat_<double>(3,3) <<
+               cos(theta[2]),    -sin(theta[2]),      0,
+               sin(theta[2]),    cos(theta[2]),       0,
+               0,               0,                  1);
+    
+    
+    // Combined rotation matrix
+    cv::Mat R = R_z * R_y * R_x;
+    
+    return R;
+
+}
+
 Calibrate::Calibrate(int numBoards, int numCornersHor, int numCornersVer,
                      const std::string &object_filename, const std::string &image_filename)
     : _numBoards(numBoards), _numCornersHor(numCornersHor), _numCornersVer(numCornersVer),
@@ -216,9 +247,44 @@ void Calibrate::calibrate_camera(const std::vector<std::vector<cv::Point3f>> &ob
             std::cout << cameraMatrix.at<float>(i, j) << "\t";
         std::cout << "\n";
     }
+    
+   calculateImagePoints(imagePoints, objectPoints, rvecs, tvecs); 
+   
 }
 
-void Calibrate::display_undistorted(cv::Mat &img, std::string winname)
+void Calibrate::displayImagePoints(cv::Mat &img, const std::vector<cv::Point2f> &imagePoints)
+{
+    CHECK(!img.empty());
+    for (size_t i = 0; i < imagePoints.size(); i++) 
+        cv::circle(img, imagePoints[i], 5, cv::Scalar(0,0,255));
+    
+}
+
+void Calibrate::calculateImagePoints(const std::vector<std::vector<cv::Point2f>> &imagePoints,
+                            const std::vector<std::vector<cv::Point3f>> &objectPoints,
+                            std::vector<cv::Mat> rvecs,
+                            std::vector<cv::Mat> tvecs)
+{
+    cv::Mat RotationMatrix;
+    cv::Rodrigues(rvecs[0], RotationMatrix);
+    cv::Vec3f RPY(0, -CV_PI*30/180, 0);
+    
+
+    for(int i = 0; i < objectPoints.size(); i++)
+    {   
+        //rvecs[i] = 0; // if you want the see object coordinates.
+        //tvecs[i] = 0;
+
+        cv::Rodrigues(RotationMatrix*eulerAnglesToRotationMatrix(RPY), rvecs[i]); // same rotation for every picture.
+        cv::projectPoints(objectPoints[0], rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imagePoints[i]);
+        
+        //DEBUG(rvecs[i]);
+        //DEBUG(tvecs[i]);
+        
+    }
+}
+
+void Calibrate::display_undistorted(cv::Mat &img, const std::vector<std::vector<cv::Point2f>> &imagePoints, std::string winname)
 {
     CHECK(!img.empty());
     bool show_once = winname.empty();
@@ -227,6 +293,10 @@ void Calibrate::display_undistorted(cv::Mat &img, std::string winname)
     cv::Mat imageUndistorted;
     undistort(img, imageUndistorted, cameraMatrix, distCoeffs);
     imshow(winname, imageUndistorted);
+
+    char ch = 0;
+    
+    
     if (show_once)
     {
         char ch = cv::waitKey(0);
@@ -235,7 +305,7 @@ void Calibrate::display_undistorted(cv::Mat &img, std::string winname)
     }
 }
 
-void Calibrate::display_undistorted(cv::VideoCapture &cap, std::string winname)
+void Calibrate::display_undistorted(cv::VideoCapture &cap, const std::vector<std::vector<cv::Point2f>> &imagePoints, std::string winname)
 {
     // make sure image stream is open
     CHECK(cap.isOpened());
@@ -243,10 +313,11 @@ void Calibrate::display_undistorted(cv::VideoCapture &cap, std::string winname)
     cap >> img;
     CHECK(!img.empty());
     CHECK(!winname.empty());
-
+    
     // for display purposes
     cv::namedWindow(winname);
 
+    int i = 0;
     char ch = 0;
     while (ch != 27) // ESC is pressed
     {
@@ -255,9 +326,14 @@ void Calibrate::display_undistorted(cv::VideoCapture &cap, std::string winname)
             std::cout << "End of image stream!" << std::endl;
             break;
         }
-        display_undistorted(img, winname);
+        displayImagePoints(img, imagePoints[i]);
+        DEBUG(imagePoints[i]);    
+        imshow("objectPoints", img); 
+        display_undistorted(img, imagePoints, winname);
         ch = cv::waitKey();
         cap >> img;
+        i++;
     }
     cv::destroyWindow(winname);
 }
+

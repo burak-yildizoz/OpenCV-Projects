@@ -77,13 +77,20 @@ public:
 	@param winname Name of the window that the result will be displayed. If it is empty, the window is held until user presses a key, and img becomes the resulting image. Else, waitKey needs to be called
 	@note Do not specify *winname* to wait until user presses a key
 	*/
-    void display_undistorted(cv::Mat &img, std::string winname = "");
+    void display_undistorted(cv::Mat &img, const std::vector<std::vector<cv::Point2f>> &imagePoints, std::string winname = "");
 
     /** @brief This is an overloaded function, provided for convenience. It differs from the above function only in what argument(s) it accepts.
 	@param cap The image stream that will be undistorted. It must be opened.
 	@param winname Name of the window that the result will be displayed.
 	*/
-    void display_undistorted(cv::VideoCapture &cap, std::string winname = "undistorted");
+    void display_undistorted(cv::VideoCapture &cap, const std::vector<std::vector<cv::Point2f>> &imagePoints, std::string winname = "undistorted");
+
+    void displayImagePoints(cv::Mat &img, const std::vector<cv::Point2f> &imagePoints);
+
+    void calculateImagePoints(const std::vector<std::vector<cv::Point2f>> &imagePoints,
+			    const std::vector<std::vector<cv::Point3f>> &objectPoints,
+                            std::vector<cv::Mat> rvecs,
+                            std::vector<cv::Mat> tvecs);
 };
 
 #endif // CALIBRATE_HPP

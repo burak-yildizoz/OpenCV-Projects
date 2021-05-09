@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
         setCap(img_stream);
     CHECK(cap.isOpened());
 
-    cal.display_undistorted(cap);
+    cal.display_undistorted(cap, image_points);
 
     return 0;
 }
