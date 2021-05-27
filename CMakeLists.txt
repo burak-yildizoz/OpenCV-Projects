@@ -61,8 +61,8 @@ endif(BUILD_SUBDIRECTORIES)
 
 include_directories("include")
 
-add_executable(optflow src/optflow.cpp)
+add_executable(optflow "src/optflow.cpp" "src/modules.cpp")
 target_link_libraries(optflow general_library)
 
-add_executable(tracker src/tracker.cpp)
+add_executable(tracker "src/tracker.cpp" "src/modules.cpp")
 target_link_libraries(tracker general_library)
