@@ -8,12 +8,7 @@ find_opencv()
 
 include_directories("include")
 
-set(SOURCES "src/Calibrate.cpp")
+set(SOURCES "src/Calibrate.cpp" "src/Fisheye.cpp")
 
-add_executable(pinhole main_calibrate.cpp ${SOURCES})
-target_link_libraries(pinhole general_library)
-
-list(APPEND SOURCES "src/Fisheye.cpp")
-
-add_executable(fisheye main_fisheye.cpp ${SOURCES})
-target_link_libraries(fisheye general_library)
+add_executable(calibrate main_calibrate.cpp ${SOURCES})
+target_link_libraries(calibrate general_library)
