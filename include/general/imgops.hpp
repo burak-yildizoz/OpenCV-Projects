@@ -3,6 +3,9 @@
 
 #include <opencv2/imgproc.hpp>
 #include <opencv2/video.hpp>
+#ifdef OPENCV_TRACKING_HPP
+#include <opencv2/tracking.hpp>
+#endif
 
 #include <vector>
 

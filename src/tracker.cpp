@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
   cv::Ptr<cv::Tracker> tracker;
   try {
     tracker = imgops::get_tracker(trackerType);
-  } catch (std::runtime_error) {
+  } catch (const std::runtime_error &) {
     std::cout << "Invalid tracker type!" << std::endl;
     DEBUG(imgops::get_tracker_types());
     return EXIT_FAILURE;

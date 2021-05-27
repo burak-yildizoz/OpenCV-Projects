@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
   bool use_rgb;
   try {
     optflow = imgops::get_optflow(optflowType, use_rgb);
-  } catch (std::runtime_error) {
+  } catch (const std::runtime_error &) {
     std::cout << "Invalid optical flow type!" << std::endl;
     DEBUG(imgops::get_optflow_types());
     return EXIT_FAILURE;

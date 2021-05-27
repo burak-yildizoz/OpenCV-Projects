@@ -299,7 +299,15 @@ cv::Mat Stitcher::combineImages(const cv::Mat &localMap,
   return finalPano.pano();
 }
 
+#if (CV_MAJOR_VERSION == 4 && CV_MINOR_VERSION >= 4) ||                        \
+    (CV_MAJOR_VERSION == 3 && CV_MINOR_VERSION >= 4 &&                         \
+     CV_SUBMINOR_VERSION >= 11)
 const cv::Ptr<cv::Feature2D> Stitcher::descriptor = cv::SIFT::create();
+#else
+[[deprecated("SIFT is not available. Using ORB descriptors.")]] const cv::Ptr<
+    cv::Feature2D>
+    Stitcher::descriptor = cv::ORB::create();
+#endif
 const cv::Ptr<cv::DescriptorMatcher> Stitcher::matcher =
     cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
 
