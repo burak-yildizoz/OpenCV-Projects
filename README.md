@@ -13,11 +13,19 @@ All projects have a cross-platform `CMakeLists.txt`, all of which add `CMakeList
 - [Segment](#Segment)
 - [Stitch](#Stitch)
 
+---
+
 For contributing, please use [`git-clang-format`](https://reviews.llvm.org/source/llvm-github/browse/main/clang/tools/clang-format/git-clang-format) to indent the code, which is available at the root folder in this repository.
 
-    $ git clang-format *
+**Windows:**
 
-or
+- Download and add to PATH `clang-format.exe` from [LLVM builds](https://llvm.org/builds/).
+
+- Run in this folder:
+
+      $ git clang-format *
+
+**Ubuntu:**
 
     $ sudo apt-get install git-clang-format
     $ git-clang-format-<ver> *
@@ -36,6 +44,9 @@ Perform pinhole and fisheye camera calibration given chessboard images.
 <kbd><img src="fig/Calibrate.jpg"/></kbd>
 
 ## general
+
+Commonly used functions.
+The following executables require OpenCV 4.5.2.
 
 ### optflow
 
@@ -88,7 +99,7 @@ Track segments in an image stream using "Efficient Graph-Based Image Segmentatio
 <kbd><img src="fig/Segment.jpg"/></kbd>
 
 First, the image is divided into segments by EGBIS.
-Then, features (preferably SIFT, ORB if not available) are detected in each segment.
+Then, SIFT features are detected in each segment.
 Feature matching is performed between two frames.
 Each segment matches with the segment that has the maximum number of feature matches in the previous frame.
 
