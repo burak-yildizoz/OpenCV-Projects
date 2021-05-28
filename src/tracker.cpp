@@ -28,6 +28,14 @@ int main(int argc, char **argv) {
   CHECK(cap.read(img));
   const std::string winname = trackerType + " Tracker";
   cv::namedWindow(winname, cv::WINDOW_KEEPRATIO);
+  int perc = 0;
+  cv::createTrackbar(
+      "%", winname, &perc, 100,
+      [](int perc, void *userdata) {
+        cv::VideoCapture &cap = *static_cast<cv::VideoCapture *>(userdata);
+        cap.set(cv::CAP_PROP_POS_AVI_RATIO, perc / 100.);
+      },
+      static_cast<void *>(&cap));
   cv::Rect bbox;
   auto select_box = [&img, &winname, &bbox, &tracker]() {
     bool showCrosshair = false;
