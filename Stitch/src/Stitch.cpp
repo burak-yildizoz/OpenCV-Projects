@@ -6,13 +6,10 @@
 #include <general/imgops.hpp>
 
 const std::string Stitcher::keys =
-    "{help h usage ?    | | print this message }"
-    "{@prepath          | ../PictureByParts/jungle/ | the part of the path to "
-    "the image sequence up to the index (e.g. \"folder/image_\" if folder "
-    "contains image_1_new.jpg, image_2_new.jpg, etc.) }"
-    "{ext post postpath | .jpg | the part of the path to the image sequence "
-    "after the index (e.g. \"_new.jpg\" if folder contains image_1_new.jpg, "
-    "image_2_new.jpg, etc.) }";
+    "{help h usage ? | | print this message }"
+    "{@path | ../PictureByParts/jungle/%1d.jpg | path to the image sequence "
+    "(e.g. \"folder/image_%02d.png\" if folder contains image_09.png, "
+    "image_10.png, etc.) }";
 
 const std::string Appender::keys =
     Stitcher::keys + "{a append affine | | use affine instead of perspective "

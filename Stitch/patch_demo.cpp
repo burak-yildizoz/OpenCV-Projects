@@ -18,14 +18,13 @@ int main(int argc, char *argv[]) {
   if ((argc == 1) || parser.has("help"))
     parser.printMessage();
 
-  const std::string prepath = parser.get<std::string>("@prepath");
-  const std::string postpath = parser.get<std::string>("postpath");
+  const std::string path = parser.get<std::string>("@path");
   const bool use_affine = parser.has("affine");
   std::cout << "Stitcher mode: " << (use_affine ? "Affine" : "Perspective")
             << std::endl;
 
-  auto filename = [&prepath, &postpath](int num) -> std::string {
-    return prepath + std::to_string(num) + postpath;
+  auto filename = [&path](int num) -> std::string {
+    return general::string_format(path, num);
   };
   DEBUG(filename(0));
 
