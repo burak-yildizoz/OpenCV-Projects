@@ -2,7 +2,9 @@
 #define STITCH_HPP
 
 #include <functional>
+#include <memory>
 #include <opencv2/features2d.hpp>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -20,6 +22,11 @@ struct Feature {
 };
 
 class Stitcher {
+public:
+  // used by cv::CommandLineParser
+  static const std::string keys;
+
+protected:
   // images to be stitched
   std::vector<cv::Mat> _imgs;
   // corresponding features of each image
@@ -43,6 +50,21 @@ class Stitcher {
   // see warpPano
   std::pair<cv::Mat, cv::Point> _lastPano;
 
+  // calculate 3x3 transformation matrix given matching keypoints
+  // and the success status of given matching IDs
+  // {H, state}
+  virtual std::pair<cv::Mat, std::vector<bool>>
+  _findTransform(const std::vector<int> &trainIDs,
+                 const std::vector<int> &queryIDs,
+                 const std::vector<cv::Point2f> &trainPts,
+                 const std::vector<cv::Point2f> &queryPts) {
+    return findHomography(trainIDs, queryIDs, trainPts, queryPts);
+  }
+  // combine images given the local map and the function which gives the image
+  // at a specific index Im(x, y) should return the image that
+  // localMap.at<uchar>(y, x) corresponds to
+  static cv::Mat _combineImages(bool affine, const cv::Mat &localMap,
+                                std::function<cv::Mat(int, int)> Im);
   // calculate the final stitching result and the origin of last image
   // {pano, orig}
   // see warpPano
@@ -95,8 +117,9 @@ public:
   // at a specific index Im(x, y) should return the image that
   // localMap.at<uchar>(y, x) corresponds to
   static cv::Mat combineImages(const cv::Mat &localMap,
-                               std::function<cv::Mat(int, int)> Im);
-
+                               std::function<cv::Mat(int, int)> Im) {
+    return _combineImages(false, localMap, Im);
+  }
   // construct the Stitcher object with the first image
   Stitcher(const cv::Mat &img);
   // construct a new Stitcher object with given previous pano
@@ -105,8 +128,8 @@ public:
   // construct a new Stitcher object by patching two Stitchers
   // see patchPano
   Stitcher(const Stitcher &prevStitcher, const Stitcher &nextStitcher);
-  // default destructor
-  ~Stitcher() {}
+  Stitcher(const std::shared_ptr<Stitcher> prevStitcher,
+           const std::shared_ptr<Stitcher> nextStitcher);
 
   // add a new image to get stitching results
   void add(const cv::Mat &img);
@@ -120,6 +143,56 @@ public:
   std::pair<cv::Mat, cv::Point> panoWithOrigin() const;
   // last image
   cv::Mat lastImg() const;
+};
+
+class Appender : public Stitcher {
+public:
+  // used by cv::CommandLineParser
+  static const std::string keys;
+  // create Stitcher object which uses perspective or affine transform
+  template <typename... Args>
+  static std::shared_ptr<Stitcher> create(bool affine, Args &&...args) {
+    return affine ? std::make_shared<Appender>(std::forward<Args>(args)...)
+                  : std::make_shared<Stitcher>(std::forward<Args>(args)...);
+  }
+
+protected:
+  // calculate 3x3 transformation matrix given matching keypoints
+  // and the success status of given matching IDs
+  // {H, state}
+  std::pair<cv::Mat, std::vector<bool>>
+  _findTransform(const std::vector<int> &trainIDs,
+                 const std::vector<int> &queryIDs,
+                 const std::vector<cv::Point2f> &trainPts,
+                 const std::vector<cv::Point2f> &queryPts) final override {
+    return findAffine(trainIDs, queryIDs, trainPts, queryPts);
+  }
+
+public:
+  // returns the 3x3 affine transform matrix (last row is [0, 0, 1]) given
+  // matching keypoints and the success status of given matching IDs {H, state}
+  static std::pair<cv::Mat, std::vector<bool>>
+  findAffine(const std::vector<int> &trainIDs, const std::vector<int> &queryIDs,
+             const std::vector<cv::Point2f> &trainPts,
+             const std::vector<cv::Point2f> &queryPts);
+  // combine images given the local map and the function which gives the image
+  // at a specific index Im(x, y) should return the image that
+  // localMap.at<uchar>(y, x) corresponds to
+  static cv::Mat combineImages(const cv::Mat &localMap,
+                               std::function<cv::Mat(int, int)> Im) {
+    return _combineImages(true, localMap, Im);
+  }
+  // construct the Appender object with the first image
+  Appender(const cv::Mat &img) : Stitcher(img) {}
+  // construct a new Appender object with given previous pano
+  // stitching is done from lastPano(lastRect) to img
+  Appender(const cv::Mat &img, const cv::Mat &lastPano, cv::Rect lastRect)
+      : Stitcher(img, lastPano, lastRect) {}
+  // construct a new Stitcher object by patching two Stitchers
+  // see patchPano
+  Appender(const std::shared_ptr<Stitcher> prevStitcher,
+           const std::shared_ptr<Stitcher> nextStitcher)
+      : Stitcher(prevStitcher, nextStitcher) {}
 };
 
 #endif // STITCH_HPP

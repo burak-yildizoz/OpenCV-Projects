@@ -2,16 +2,32 @@
 #include <opencv2/imgcodecs.hpp>
 
 #include <iostream>
-#include <string>
 
 #include <Stitch/Stitch.hpp>
 #include <general/general.hpp>
 #include <general/imgops.hpp>
 
 int main(int argc, char *argv[]) {
-  const std::string prepath = (argc > 1) ? argv[1] : "jungle/";
-  const std::string postpath = (argc > 2) ? argv[2] : ".jpg";
-  const std::string matpath = (argc > 3) ? argv[3] : "";
+  const std::string keys =
+      Appender::keys +
+      "{@matpath | | path to local map saved in binary mode (see "
+      "general::matwrite)\n"
+      "example:\n"
+      "[ 0   0  255 255 255 255]\n"
+      "[ 0  255 255 255 255  0 ]\n"
+      "[255 255 255 255  0   0 ]\n"
+      "Image numbers 2-5, 7-10, 12-15 will be stitched in this example. }";
+  cv::CommandLineParser parser(argc, argv, keys);
+  parser.about("Demonstration of combining images given local map");
+  if ((argc == 1) || parser.has("help"))
+    parser.printMessage();
+
+  const std::string prepath = parser.get<std::string>("@prepath");
+  const std::string postpath = parser.get<std::string>("postpath");
+  const bool use_affine = parser.has("affine");
+  std::cout << "Stitcher mode: " << (use_affine ? "Affine" : "Perspective")
+            << std::endl;
+  const std::string matpath = parser.get<std::string>("@matpath");
 
   auto filename = [&prepath, &postpath](int num) -> std::string {
     return prepath + std::to_string(num) + postpath;

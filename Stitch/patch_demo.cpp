@@ -2,15 +2,27 @@
 #include <opencv2/imgcodecs.hpp>
 
 #include <iostream>
-#include <string>
 
 #include <Stitch/Stitch.hpp>
 #include <general/general.hpp>
 #include <general/imgops.hpp>
 
 int main(int argc, char *argv[]) {
-  const std::string prepath = (argc > 1) ? argv[1] : "jungle/";
-  const std::string postpath = (argc > 2) ? argv[2] : ".jpg";
+  const std::string keys = Appender::keys;
+  cv::CommandLineParser parser(argc, argv, keys);
+  parser.about("Demonstration of combining 4 images\n"
+               "0 -> 1 <- 2\n"
+               "     |\n"
+               "     v\n"
+               "     3");
+  if ((argc == 1) || parser.has("help"))
+    parser.printMessage();
+
+  const std::string prepath = parser.get<std::string>("@prepath");
+  const std::string postpath = parser.get<std::string>("postpath");
+  const bool use_affine = parser.has("affine");
+  std::cout << "Stitcher mode: " << (use_affine ? "Affine" : "Perspective")
+            << std::endl;
 
   auto filename = [&prepath, &postpath](int num) -> std::string {
     return prepath + std::to_string(num) + postpath;
@@ -24,24 +36,29 @@ int main(int argc, char *argv[]) {
   };
 
   // pano: ... 0 -> 1
-  Stitcher sfront(images(0));
+  std::shared_ptr<Stitcher> sfront = Appender::create(use_affine, images(0));
   cv::Mat patchImg = images(1);
   // add until patch image
-  sfront.add(patchImg);
+  sfront->add(patchImg);
 
   // pano: ... 2 -> 1
-  Stitcher sback(images(2));
+  std::shared_ptr<Stitcher> sback = Appender::create(use_affine, images(2));
   // add until patch image
-  sback.add(patchImg);
+  sback->add(patchImg);
 
   // merge: ... 0 -> 1 <- 2 ...
   std::pair<cv::Mat, cv::Point> patchedPano =
-      Stitcher::patchPano(sfront.panoWithOrigin(), sback.panoWithOrigin());
+      Stitcher::patchPano(sfront->panoWithOrigin(), sback->panoWithOrigin());
   const cv::Mat &pano = patchedPano.first;
 
-  cv::imshow("first stitch", sfront.pano());
-  cv::imshow("second stitch", sback.pano());
-  cv::imshow("pano", pano);
+  auto show_resizable = [](std::string winname, const cv::Mat &img) {
+    cv::namedWindow(winname, cv::WINDOW_KEEPRATIO);
+    cv::imshow(winname, img);
+  };
+
+  show_resizable("first stitch", sfront->pano());
+  show_resizable("second stitch", sback->pano());
+  show_resizable("pano", pano);
   cv::waitKey();
 
   // warp: ... 0 -> 1 <- 2 ...
@@ -49,12 +66,13 @@ int main(int argc, char *argv[]) {
   //                v
   //                3
   cv::Mat nextImg = images(3);
-  Stitcher scont(nextImg, pano, cv::Rect(patchedPano.second, patchImg.size()));
+  std::shared_ptr<Stitcher> scont = Appender::create(
+      use_affine, nextImg, pano, cv::Rect(patchedPano.second, patchImg.size()));
   // continue adding
 
-  cv::imshow("matches", scont.drawMatches());
-  cv::imshow("stitching", scont.newestStitch());
-  cv::imshow("new pano", scont.pano());
+  show_resizable("matches", scont->drawMatches());
+  show_resizable("stitching", scont->newestStitch());
+  show_resizable("new pano", scont->pano());
   cv::waitKey();
 
   cv::destroyAllWindows();

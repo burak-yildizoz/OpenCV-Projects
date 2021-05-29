@@ -1,20 +1,28 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
 
-#include <cstdlib>
 #include <iostream>
-#include <string>
 
 #include <Stitch/Stitch.hpp>
 #include <general/general.hpp>
 #include <general/imgops.hpp>
 
 int main(int argc, char *argv[]) {
-  const std::string prepath = (argc > 1) ? argv[1] : "frame_";
-  const std::string postpath = (argc > 2) ? argv[2] : ".jpg";
+  const std::string keys = Appender::keys +
+                           "{start first | 0    | First image index }"
+                           "{end last    | 1000 | Last image index }";
+  cv::CommandLineParser parser(argc, argv, keys);
+  parser.about("Stitch images in given range");
+  if ((argc == 1) || parser.has("help"))
+    parser.printMessage();
 
-  const int start = (argc > 3) ? atoi(argv[3]) : 1;
-  const int end = (argc > 4) ? atoi(argv[4]) : 332;
+  const std::string prepath = parser.get<std::string>("@prepath");
+  const std::string postpath = parser.get<std::string>("postpath");
+  const bool use_affine = parser.has("affine");
+  std::cout << "Stitcher mode: " << (use_affine ? "Affine" : "Perspective")
+            << std::endl;
+  const int start = parser.get<int>("start");
+  const int end = parser.get<int>("end");
 
   auto filename = [&prepath, &postpath](int num) -> std::string {
     return prepath + std::to_string(num) + postpath;
@@ -38,17 +46,17 @@ int main(int argc, char *argv[]) {
   cv::imshow(winname, img);
   char ch = cv::waitKey();
 
-  Stitcher stitcher(img);
+  std::shared_ptr<Stitcher> stitcher = Appender::create(use_affine, img);
   // press ESC to exit
   for (int i = start + 1; (ch != 27) && (i <= end); i++) {
     std::cout << i << std::endl;
     // read next image and resize
     img = images(i);
     // do stitching and get the results
-    stitcher.add(img);
-    cv::Mat matches = stitcher.drawMatches();
-    cv::Mat stitching = stitcher.newestStitch();
-    cv::Mat pano = stitcher.pano();
+    stitcher->add(img);
+    cv::Mat matches = stitcher->drawMatches();
+    cv::Mat stitching = stitcher->newestStitch();
+    cv::Mat pano = stitcher->pano();
     // show results
     cv::imshow("matches", matches);
     cv::imshow("stitching", stitching);

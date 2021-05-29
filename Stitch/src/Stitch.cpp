@@ -5,6 +5,19 @@
 #include <general/general.hpp>
 #include <general/imgops.hpp>
 
+const std::string Stitcher::keys =
+    "{help h usage ?    | | print this message }"
+    "{@prepath          | ../PictureByParts/jungle/ | the part of the path to "
+    "the image sequence up to the index (e.g. \"folder/image_\" if folder "
+    "contains image_1_new.jpg, image_2_new.jpg, etc.) }"
+    "{ext post postpath | .jpg | the part of the path to the image sequence "
+    "after the index (e.g. \"_new.jpg\" if folder contains image_1_new.jpg, "
+    "image_2_new.jpg, etc.) }";
+
+const std::string Appender::keys =
+    Stitcher::keys + "{a append affine | | use affine instead of perspective "
+                     "transform (default is 4-point homography) }";
+
 Feature::Feature(const cv::Mat &gray) {
   CHECK(gray.dims == 2);
   Stitcher::descriptor->detectAndCompute(gray, cv::noArray(), kps, desc);
@@ -29,7 +42,7 @@ std::pair<cv::Mat, cv::Point> Stitcher::_calculatePano() {
   std::vector<cv::Point2f> queryPts = _features.back().getKeypoints();
   for (cv::Point2f &pt : trainPts)
     pt += (cv::Point2f)prevOrig;
-  cv::Mat corrH = findHomography(trainIDs, queryIDs, trainPts, queryPts).first;
+  cv::Mat corrH = _findTransform(trainIDs, queryIDs, trainPts, queryPts).first;
 
   return warpPano(img, prevPano, corrH);
 }
@@ -59,27 +72,47 @@ Stitcher::findHomography(const std::vector<int> &trainIDs,
                          const std::vector<int> &queryIDs,
                          const std::vector<cv::Point2f> &trainPts,
                          const std::vector<cv::Point2f> &queryPts) {
-  // computing a homography requires at least 4 matches
-  cv::Mat H;
-  std::vector<bool> state;
-  if (trainIDs.size() > 4) {
-    // construct the two sets of points
-    std::vector<cv::Point2f> srcPoints, dstPoints;
-    for (size_t i = 0; i < trainIDs.size(); i++) {
-      srcPoints.push_back(trainPts[trainIDs[i]]);
-      dstPoints.push_back(queryPts[queryIDs[i]]);
-    }
-    // compute the homography between the two sets of points
-    double reprojThresh = 4.0;
-    cv::Mat mask;
-    H = cv::findHomography(srcPoints, dstPoints, cv::RANSAC, reprojThresh,
-                           mask);
-    // find successfully matched keypoints
-    state.resize(mask.rows);
-    for (int i = 0; i < mask.rows; i++)
-      state[i] = mask.at<bool>(i, 0);
+  // construct the two sets of points
+  std::vector<cv::Point2f> srcPoints, dstPoints;
+  for (size_t i = 0; i < trainIDs.size(); i++) {
+    srcPoints.push_back(trainPts[trainIDs[i]]);
+    dstPoints.push_back(queryPts[queryIDs[i]]);
   }
+  // compute the homography between the two sets of points
+  double reprojThresh = 4.0;
+  cv::Mat mask;
+  cv::Mat H =
+      cv::findHomography(srcPoints, dstPoints, cv::RANSAC, reprojThresh, mask);
+  // find successfully matched keypoints
+  std::vector<bool> state(mask.rows);
+  for (int i = 0; i < mask.rows; i++)
+    state[i] = mask.at<bool>(i, 0);
+  // computing a homography requires at least 4 matches
   CHECK(!H.empty());
+  return std::make_pair(H, state);
+}
+
+std::pair<cv::Mat, std::vector<bool>>
+Appender::findAffine(const std::vector<int> &trainIDs,
+                     const std::vector<int> &queryIDs,
+                     const std::vector<cv::Point2f> &trainPts,
+                     const std::vector<cv::Point2f> &queryPts) {
+  // construct the two sets of points
+  std::vector<cv::Point2f> srcPoints, dstPoints;
+  for (size_t i = 0; i < trainIDs.size(); i++) {
+    srcPoints.push_back(trainPts[trainIDs[i]]);
+    dstPoints.push_back(queryPts[queryIDs[i]]);
+  }
+  // compute the affine transform between the two sets of points
+  cv::Mat mask;
+  cv::Mat H = cv::estimateAffine2D(srcPoints, dstPoints, mask);
+  // find successfully matched keypoints
+  std::vector<bool> state(mask.rows);
+  for (int i = 0; i < mask.rows; i++)
+    state[i] = mask.at<bool>(i, 0);
+  // computing an affine transform requires at least 3 matches
+  CHECK(!H.empty());
+  H.push_back(cv::Mat((cv::Mat1d(1, 3) << 0, 0, 1)));
   return std::make_pair(H, state);
 }
 
@@ -169,8 +202,8 @@ std::pair<cv::Mat, cv::Point> Stitcher::warpPano(const cv::Mat &img,
   return std::make_pair(pano, newOrig);
 }
 
-cv::Mat Stitcher::combineImages(const cv::Mat &localMap,
-                                std::function<cv::Mat(int, int)> Im) {
+cv::Mat Stitcher::_combineImages(bool affine, const cv::Mat &localMap,
+                                 std::function<cv::Mat(int, int)> Im) {
   // find the centroid of the contour of the area in localMap
   std::vector<std::vector<cv::Point>> contours;
   cv::findContours(localMap, contours, cv::RETR_LIST, cv::CHAIN_APPROX_NONE);
@@ -210,71 +243,76 @@ cv::Mat Stitcher::combineImages(const cv::Mat &localMap,
 
   // obtain the pano of the upper part
   int lastNode = closestPoint(0);
-  Stitcher warpedRowPanoTop(Im(lastNode, 0));
+  std::shared_ptr<Stitcher> warpedRowPanoTop =
+      Appender::create(affine, Im(lastNode, 0));
   for (int i = 0; i < center.y; i++) {
     int node = closestPoint(i);
     int start = startPoint(i);
     int end = endPoint(i);
-    Stitcher leftPano(Im(start, i));
+    std::shared_ptr<Stitcher> leftPano = Appender::create(affine, Im(start, i));
     // stitch from start to node
     for (int j = start + 1; j <= node; j++) {
-      leftPano.add(Im(j, i));
+      leftPano->add(Im(j, i));
       // patch warpedRowPanoTop at the specific point
       if (j == lastNode)
-        leftPano = Stitcher(leftPano, warpedRowPanoTop);
+        leftPano.swap(Appender::create(affine, leftPano, warpedRowPanoTop));
     }
-    Stitcher rightPano(Im(end, i));
+    std::shared_ptr<Stitcher> rightPano = Appender::create(affine, Im(end, i));
     // stitch from end to node
     for (int j = end - 1; j >= node; j--) {
-      rightPano.add(Im(j, i));
+      rightPano->add(Im(j, i));
       // patch warpedRowPanoTop at the specific point
       if (j == lastNode)
-        rightPano = Stitcher(rightPano, warpedRowPanoTop);
+        rightPano.swap(Appender::create(affine, rightPano, warpedRowPanoTop));
     }
     // Note that even if we have patched warpedRowPanoTop to both leftPano and
     // rightPano when lastNode is node, it does not affect the result of
     // patching them to rowPano since they won't be warped after
     // warpedRowPanoTop is patched
-    Stitcher rowPano(leftPano, rightPano);
-    std::pair<cv::Mat, cv::Point> pano = rowPano.panoWithOrigin();
-    warpedRowPanoTop =
-        Stitcher(Im(node, i + 1), pano.first,
-                 cv::Rect(pano.second, rowPano.lastImg().size()));
+    std::shared_ptr<Stitcher> rowPano =
+        Appender::create(affine, leftPano, rightPano);
+    std::pair<cv::Mat, cv::Point> pano = rowPano->panoWithOrigin();
+    warpedRowPanoTop.swap(
+        Appender::create(affine, Im(node, i + 1), pano.first,
+                         cv::Rect(pano.second, rowPano->lastImg().size())));
     lastNode = node;
   }
 
   // obtain the pano of the lower part
   lastNode = closestPoint(localMap.rows - 1);
-  Stitcher warpedRowPanoBottom(Im(lastNode, localMap.rows - 1));
+  std::shared_ptr<Stitcher> warpedRowPanoBottom =
+      Appender::create(affine, Im(lastNode, localMap.rows - 1));
   for (int i = localMap.rows - 1; i > center.y; i--) {
     int node = closestPoint(i);
     int start = startPoint(i);
     int end = endPoint(i);
-    Stitcher leftPano(Im(start, i));
+    std::shared_ptr<Stitcher> leftPano = Appender::create(affine, Im(start, i));
     // stitch from start to node
     for (int j = start + 1; j <= node; j++) {
-      leftPano.add(Im(j, i));
+      leftPano->add(Im(j, i));
       // patch warpedRowPanoBottom at the specific point
       if (j == lastNode)
-        leftPano = Stitcher(leftPano, warpedRowPanoBottom);
+        leftPano.swap(Appender::create(affine, leftPano, warpedRowPanoBottom));
     }
-    Stitcher rightPano(Im(end, i));
+    std::shared_ptr<Stitcher> rightPano = Appender::create(affine, Im(end, i));
     // stitch from end to node
     for (int j = end - 1; j >= node; j--) {
-      rightPano.add(Im(j, i));
+      rightPano->add(Im(j, i));
       // patch warpedRowPanoBottom at the specific point
       if (j == lastNode)
-        rightPano = Stitcher(rightPano, warpedRowPanoBottom);
+        rightPano.swap(
+            Appender::create(affine, rightPano, warpedRowPanoBottom));
     }
     // Note that even if we have patched warpedRowPanoBottom to both leftPano
     // and rightPano when lastNode is node, it does not affect the result of
     // patching them to rowPano since they won't be warped after
     // warpedRowPanoBottom is patched
-    Stitcher rowPano(leftPano, rightPano);
-    std::pair<cv::Mat, cv::Point> pano = rowPano.panoWithOrigin();
-    warpedRowPanoBottom =
-        Stitcher(Im(node, i - 1), pano.first,
-                 cv::Rect(pano.second, rowPano.lastImg().size()));
+    std::shared_ptr<Stitcher> rowPano =
+        Appender::create(affine, leftPano, rightPano);
+    std::pair<cv::Mat, cv::Point> pano = rowPano->panoWithOrigin();
+    warpedRowPanoBottom.swap(
+        Appender::create(affine, Im(node, i - 1), pano.first,
+                         cv::Rect(pano.second, rowPano->lastImg().size())));
     lastNode = node;
   }
 
@@ -282,21 +320,25 @@ cv::Mat Stitcher::combineImages(const cv::Mat &localMap,
   int node = center.x;
   int start = startPoint(center.y);
   int end = endPoint(center.y);
-  Stitcher leftPano(Im(start, center.y));
+  std::shared_ptr<Stitcher> leftPano =
+      Appender::create(affine, Im(start, center.y));
   // stitch from start to node
   for (int j = start + 1; j <= node; j++)
-    leftPano.add(Im(j, center.y));
-  Stitcher rightPano(Im(end, center.y));
+    leftPano->add(Im(j, center.y));
+  std::shared_ptr<Stitcher> rightPano =
+      Appender::create(affine, Im(end, center.y));
   // stitch from end to node
   for (int j = end - 1; j >= node; j--)
-    rightPano.add(Im(j, center.y));
-  Stitcher rowPano(leftPano, rightPano);
+    rightPano->add(Im(j, center.y));
+  std::shared_ptr<Stitcher> rowPano =
+      Appender::create(affine, leftPano, rightPano);
 
   // obtain the final pano by patching the three pano
-  Stitcher finalPano(warpedRowPanoTop, warpedRowPanoBottom);
-  finalPano = Stitcher(rowPano, finalPano);
+  std::shared_ptr<Stitcher> finalPano =
+      Appender::create(affine, warpedRowPanoTop, warpedRowPanoBottom);
+  finalPano.swap(Appender::create(affine, rowPano, finalPano));
 
-  return finalPano.pano();
+  return finalPano->pano();
 }
 
 #if (CV_MAJOR_VERSION == 4 && CV_MINOR_VERSION >= 4) ||                        \
@@ -347,30 +389,37 @@ Stitcher::Stitcher(const cv::Mat &img, const cv::Mat &lastPano,
   std::vector<cv::Point2f> trainPts = prevFeature.getKeypoints();
   std::vector<cv::Point2f> queryPts = feature.getKeypoints();
   std::pair<cv::Mat, std::vector<bool>> homography =
-      findHomography(trainIDs, queryIDs, trainPts, queryPts);
+      _findTransform(trainIDs, queryIDs, trainPts, queryPts);
   _homographies.push_back(homography.first);
   _status.push_back(homography.second);
 
   // calculate the last pano
   for (cv::Point2f &pt : trainPts)
     pt += (cv::Point2f)lastRect.tl();
-  cv::Mat corrH = findHomography(trainIDs, queryIDs, trainPts, queryPts).first;
+  cv::Mat corrH = _findTransform(trainIDs, queryIDs, trainPts, queryPts).first;
   _lastPano = warpPano(img, lastPano, corrH);
 }
 
 Stitcher::Stitcher(const Stitcher &prevStitcher, const Stitcher &nextStitcher) {
+  Stitcher s(std::make_shared<Stitcher>(prevStitcher),
+             std::make_shared<Stitcher>(nextStitcher));
+  *this = std::move(s);
+}
+
+Stitcher::Stitcher(const std::shared_ptr<Stitcher> prevStitcher,
+                   const std::shared_ptr<Stitcher> nextStitcher) {
   // check if they have the same lastImg
-  cv::Mat img = prevStitcher.lastImg();
+  cv::Mat img = prevStitcher->lastImg();
   auto equal = [](const cv::Mat &lhs, const cv::Mat &rhs) -> bool {
     if ((lhs.rows != rhs.rows) || (lhs.cols != rhs.cols))
       return false;
     cv::Scalar s = cv::sum(lhs - rhs);
     return (s[0] == 0) && (s[1] == 0) && (s[2] == 0);
   };
-  CHECK(equal(img, nextStitcher.lastImg()));
+  CHECK(equal(img, nextStitcher->lastImg()));
   // patch the panos
-  std::pair<cv::Mat, cv::Point> prevPano = prevStitcher.panoWithOrigin();
-  std::pair<cv::Mat, cv::Point> nextPano = nextStitcher.panoWithOrigin();
+  std::pair<cv::Mat, cv::Point> prevPano = prevStitcher->panoWithOrigin();
+  std::pair<cv::Mat, cv::Point> nextPano = nextStitcher->panoWithOrigin();
   std::pair<cv::Mat, cv::Point> pano = Stitcher::patchPano(prevPano, nextPano);
   // save the results
   _imgs.push_back(img);
@@ -392,7 +441,7 @@ void Stitcher::add(const cv::Mat &img) {
 
   // compute the homography between the previous image
   std::pair<cv::Mat, std::vector<bool>> homography =
-      findHomography(trainIDs, queryIDs, _features.back().getKeypoints(),
+      _findTransform(trainIDs, queryIDs, _features.back().getKeypoints(),
                      feature.getKeypoints());
   const cv::Mat &H = homography.first;
   const std::vector<bool> &state = homography.second;
