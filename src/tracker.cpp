@@ -1,6 +1,7 @@
+#include <opencv2/highgui.hpp>
+
 #include <general/general.hpp>
 #include <general/imgops.hpp>
-#include <opencv2/highgui.hpp>
 
 const std::string keys = "{ tracker t | CSRT      | tracker type }"
                          "{ input i   | vtest.avi | image stream }";
@@ -36,7 +37,7 @@ int main(int argc, char **argv) {
         cap.set(cv::CAP_PROP_POS_AVI_RATIO, perc / 100.);
       },
       static_cast<void *>(&cap));
-  cv::Rect bbox;
+  cv::Rect2d bbox;
   auto select_box = [&img, &winname, &bbox, &tracker]() {
     bool showCrosshair = false;
     bbox = cv::selectROI(winname, img, showCrosshair);

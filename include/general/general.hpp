@@ -185,6 +185,10 @@ inline std::string &toupper(std::string &s) {
                  [](unsigned char c) { return std::toupper(c); });
   return s;
 }
+
+// convert from rvlaue to lvalue
+template <typename T> T &make_ref(T &&x) { return x; }
+
 } // namespace general
 
 #endif // GENERAL_HPP

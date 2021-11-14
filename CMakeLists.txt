@@ -1,5 +1,5 @@
 project(general)
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.7)
 
 macro(find_opencv)
   if(WIN32)
@@ -61,8 +61,12 @@ endif(BUILD_SUBDIRECTORIES)
 
 include_directories("include")
 
-add_executable(optflow "src/optflow.cpp" "src/modules.cpp")
-target_link_libraries(optflow general_library)
+if(${OpenCV_VERSION} VERSION_GREATER_EQUAL "4.5.3")
 
-add_executable(tracker "src/tracker.cpp" "src/modules.cpp")
-target_link_libraries(tracker general_library)
+  add_executable(optflow "src/optflow.cpp" "src/modules.cpp")
+  target_link_libraries(optflow general_library)
+
+  add_executable(tracker "src/tracker.cpp" "src/modules.cpp")
+  target_link_libraries(tracker general_library)
+
+endif()

@@ -252,7 +252,8 @@ cv::Mat Stitcher::_combineImages(bool affine, const cv::Mat &localMap,
       leftPano->add(Im(j, i));
       // patch warpedRowPanoTop at the specific point
       if (j == lastNode)
-        leftPano.swap(Appender::create(affine, leftPano, warpedRowPanoTop));
+        leftPano.swap(general::make_ref(
+            Appender::create(affine, leftPano, warpedRowPanoTop)));
     }
     std::shared_ptr<Stitcher> rightPano = Appender::create(affine, Im(end, i));
     // stitch from end to node
@@ -260,7 +261,8 @@ cv::Mat Stitcher::_combineImages(bool affine, const cv::Mat &localMap,
       rightPano->add(Im(j, i));
       // patch warpedRowPanoTop at the specific point
       if (j == lastNode)
-        rightPano.swap(Appender::create(affine, rightPano, warpedRowPanoTop));
+        rightPano.swap(general::make_ref(
+            Appender::create(affine, rightPano, warpedRowPanoTop)));
     }
     // Note that even if we have patched warpedRowPanoTop to both leftPano and
     // rightPano when lastNode is node, it does not affect the result of
@@ -269,9 +271,9 @@ cv::Mat Stitcher::_combineImages(bool affine, const cv::Mat &localMap,
     std::shared_ptr<Stitcher> rowPano =
         Appender::create(affine, leftPano, rightPano);
     std::pair<cv::Mat, cv::Point> pano = rowPano->panoWithOrigin();
-    warpedRowPanoTop.swap(
+    warpedRowPanoTop.swap(general::make_ref(
         Appender::create(affine, Im(node, i + 1), pano.first,
-                         cv::Rect(pano.second, rowPano->lastImg().size())));
+                         cv::Rect(pano.second, rowPano->lastImg().size()))));
     lastNode = node;
   }
 
@@ -289,7 +291,8 @@ cv::Mat Stitcher::_combineImages(bool affine, const cv::Mat &localMap,
       leftPano->add(Im(j, i));
       // patch warpedRowPanoBottom at the specific point
       if (j == lastNode)
-        leftPano.swap(Appender::create(affine, leftPano, warpedRowPanoBottom));
+        leftPano.swap(general::make_ref(
+            Appender::create(affine, leftPano, warpedRowPanoBottom)));
     }
     std::shared_ptr<Stitcher> rightPano = Appender::create(affine, Im(end, i));
     // stitch from end to node
@@ -297,8 +300,8 @@ cv::Mat Stitcher::_combineImages(bool affine, const cv::Mat &localMap,
       rightPano->add(Im(j, i));
       // patch warpedRowPanoBottom at the specific point
       if (j == lastNode)
-        rightPano.swap(
-            Appender::create(affine, rightPano, warpedRowPanoBottom));
+        rightPano.swap(general::make_ref(
+            Appender::create(affine, rightPano, warpedRowPanoBottom)));
     }
     // Note that even if we have patched warpedRowPanoBottom to both leftPano
     // and rightPano when lastNode is node, it does not affect the result of
@@ -307,9 +310,9 @@ cv::Mat Stitcher::_combineImages(bool affine, const cv::Mat &localMap,
     std::shared_ptr<Stitcher> rowPano =
         Appender::create(affine, leftPano, rightPano);
     std::pair<cv::Mat, cv::Point> pano = rowPano->panoWithOrigin();
-    warpedRowPanoBottom.swap(
+    warpedRowPanoBottom.swap(general::make_ref(
         Appender::create(affine, Im(node, i - 1), pano.first,
-                         cv::Rect(pano.second, rowPano->lastImg().size())));
+                         cv::Rect(pano.second, rowPano->lastImg().size()))));
     lastNode = node;
   }
 
@@ -333,7 +336,8 @@ cv::Mat Stitcher::_combineImages(bool affine, const cv::Mat &localMap,
   // obtain the final pano by patching the three pano
   std::shared_ptr<Stitcher> finalPano =
       Appender::create(affine, warpedRowPanoTop, warpedRowPanoBottom);
-  finalPano.swap(Appender::create(affine, rowPano, finalPano));
+  finalPano.swap(
+      general::make_ref(Appender::create(affine, rowPano, finalPano)));
 
   return finalPano->pano();
 }
